@@ -1,0 +1,53 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+    PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+    "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="cn.edu.scnu.hospitalmanagementinformationsystem.mapper.PatientMapper">
+    <resultMap id="PatientResultMap" type="cn.edu.scnu.hospitalmanagementinformationsystem.entity.Patient">
+        <constructor>
+            <idArg column="id" javaType="java.lang.Long" />
+            <arg column="user_id" javaType="java.lang.Long" />
+            <arg column="medical_record_no" javaType="java.lang.String" />
+            <arg column="name" javaType="java.lang.String" />
+            <arg column="gender" javaType="cn.edu.scnu.hospitalmanagementinformationsystem.entity.Gender" />
+            <arg column="phone" javaType="java.lang.String" />
+            <arg column="address" javaType="java.lang.String" />
+        </constructor>
+    </resultMap>
+
+    <select id="findAll" resultMap="PatientResultMap">
+        SELECT id, user_id, medical_record_no, name, gender, phone, address
+        FROM patients
+        <where>
+            <if test="keyword != null and keyword != ''">
+                name LIKE CONCAT('%', #{keyword}, '%')
+            </if>
+        </where>
+        ORDER BY id
+    </select>
+
+    <select id="findById" resultMap="PatientResultMap">
+        SELECT id, user_id, medical_record_no, name, gender, phone, address
+        FROM patients
+        WHERE id = #{id}
+    </select>
+
+    <insert id="insert" useGeneratedKeys="true" keyProperty="id">
+        INSERT INTO patients (user_id, medical_record_no, name, gender, phone, address)
+        VALUES (#{userId}, #{medicalRecordNo}, #{name}, #{gender}, #{phone}, #{address})
+    </insert>
+
+    <update id="update">
+        UPDATE patients
+        SET medical_record_no = #{medicalRecordNo},
+            name = #{name},
+            gender = #{gender},
+            phone = #{phone},
+            address = #{address}
+        WHERE id = #{id}
+    </update>
+
+    <delete id="deleteById">
+        DELETE FROM patients WHERE id = #{id}
+    </delete>
+</mapper>

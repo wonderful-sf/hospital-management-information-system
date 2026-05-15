@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>登录 - 医院信息管理系统</title>
+    <link rel="stylesheet" href="/css/app.css">
+</head>
+<body class="login-page">
+    <main class="login-shell">
+        <section class="login-card">
+            <div class="brand-block">
+                <span class="brand-mark">H</span>
+                <div>
+                    <h1>医院信息管理系统</h1>
+                    <p>门诊、住院、费用与统计统一管理平台</p>
+                </div>
+            </div>
+            <form id="loginForm" class="login-form">
+                <label>
+                    账号
+                    <input id="username" name="username" autocomplete="username" placeholder="请输入账号" required>
+                </label>
+                <label>
+                    密码
+                    <input id="password" name="password" type="password" autocomplete="current-password" placeholder="请输入密码" required>
+                </label>
+                <button type="submit">登录系统</button>
+                <p id="loginMessage" class="form-message" role="alert"></p>
+            </form>
+            <div class="demo-users">
+                <span>演示账号：admin / doc_zhang / pat_lin</span>
+                <span>密码见数据库初始化脚本或课程说明</span>
+            </div>
+        </section>
+    </main>
+    <script src="/js/login.js"></script>
+</body>
+</html>

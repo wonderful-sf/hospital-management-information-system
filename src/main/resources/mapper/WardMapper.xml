@@ -1,0 +1,50 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+    PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+    "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="cn.edu.scnu.hospitalmanagementinformationsystem.mapper.WardMapper">
+    <resultMap id="WardResultMap" type="cn.edu.scnu.hospitalmanagementinformationsystem.entity.Ward">
+        <constructor>
+            <idArg column="id" javaType="java.lang.Long" />
+            <arg column="department_id" javaType="java.lang.Long" />
+            <arg column="ward_no" javaType="java.lang.String" />
+            <arg column="location" javaType="java.lang.String" />
+            <arg column="daily_charge" javaType="java.math.BigDecimal" />
+        </constructor>
+    </resultMap>
+
+    <select id="findAll" resultMap="WardResultMap">
+        SELECT id, department_id, ward_no, location, daily_charge
+        FROM wards
+        <where>
+            <if test="keyword != null and keyword != ''">
+                ward_no LIKE CONCAT('%', #{keyword}, '%')
+            </if>
+        </where>
+        ORDER BY id
+    </select>
+
+    <select id="findById" resultMap="WardResultMap">
+        SELECT id, department_id, ward_no, location, daily_charge
+        FROM wards
+        WHERE id = #{id}
+    </select>
+
+    <insert id="insert" useGeneratedKeys="true" keyProperty="id">
+        INSERT INTO wards (department_id, ward_no, location, daily_charge)
+        VALUES (#{departmentId}, #{wardNo}, #{location}, #{dailyCharge})
+    </insert>
+
+    <update id="update">
+        UPDATE wards
+        SET department_id = #{departmentId},
+            ward_no = #{wardNo},
+            location = #{location},
+            daily_charge = #{dailyCharge}
+        WHERE id = #{id}
+    </update>
+
+    <delete id="deleteById">
+        DELETE FROM wards WHERE id = #{id}
+    </delete>
+</mapper>

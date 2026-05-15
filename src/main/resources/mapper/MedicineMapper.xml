@@ -1,0 +1,56 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+    PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+    "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="cn.edu.scnu.hospitalmanagementinformationsystem.mapper.MedicineMapper">
+    <resultMap id="MedicineResultMap" type="cn.edu.scnu.hospitalmanagementinformationsystem.entity.Medicine">
+        <constructor>
+            <idArg column="id" javaType="java.lang.Long" />
+            <arg column="code" javaType="java.lang.String" />
+            <arg column="name" javaType="java.lang.String" />
+            <arg column="specification" javaType="java.lang.String" />
+            <arg column="unit" javaType="java.lang.String" />
+            <arg column="unit_price" javaType="java.math.BigDecimal" />
+            <arg column="stock_quantity" javaType="java.lang.Integer" />
+            <arg column="status" javaType="cn.edu.scnu.hospitalmanagementinformationsystem.entity.MedicineStatus" />
+        </constructor>
+    </resultMap>
+
+    <select id="findAll" resultMap="MedicineResultMap">
+        SELECT id, code, name, specification, unit, unit_price, stock_quantity, status
+        FROM medicines
+        <where>
+            <if test="keyword != null and keyword != ''">
+                name LIKE CONCAT('%', #{keyword}, '%')
+            </if>
+        </where>
+        ORDER BY id
+    </select>
+
+    <select id="findById" resultMap="MedicineResultMap">
+        SELECT id, code, name, specification, unit, unit_price, stock_quantity, status
+        FROM medicines
+        WHERE id = #{id}
+    </select>
+
+    <insert id="insert" useGeneratedKeys="true" keyProperty="id">
+        INSERT INTO medicines (code, name, specification, unit, unit_price, stock_quantity, status)
+        VALUES (#{code}, #{name}, #{specification}, #{unit}, #{unitPrice}, #{stockQuantity}, #{status})
+    </insert>
+
+    <update id="update">
+        UPDATE medicines
+        SET code = #{code},
+            name = #{name},
+            specification = #{specification},
+            unit = #{unit},
+            unit_price = #{unitPrice},
+            stock_quantity = #{stockQuantity},
+            status = #{status}
+        WHERE id = #{id}
+    </update>
+
+    <update id="disableById">
+        UPDATE medicines SET status = 'DISABLED' WHERE id = #{id}
+    </update>
+</mapper>

@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+    PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+    "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="cn.edu.scnu.hospitalmanagementinformationsystem.mapper.UserMapper">
+    <resultMap id="UserResultMap" type="cn.edu.scnu.hospitalmanagementinformationsystem.entity.User">
+        <constructor>
+            <idArg column="id" javaType="java.lang.Long" />
+            <arg column="username" javaType="java.lang.String" />
+            <arg column="password" javaType="java.lang.String" />
+            <arg column="role" javaType="cn.edu.scnu.hospitalmanagementinformationsystem.entity.UserRole" />
+            <arg column="permissions" javaType="java.lang.String" />
+            <arg column="status" javaType="cn.edu.scnu.hospitalmanagementinformationsystem.entity.UserStatus" />
+        </constructor>
+    </resultMap>
+
+    <select id="findActiveByUsername" resultMap="UserResultMap">
+        SELECT
+            id,
+            username,
+            password,
+            role,
+            permissions,
+            status
+        FROM users
+        WHERE username = #{username}
+          AND status = 'ACTIVE'
+        LIMIT 1
+    </select>
+</mapper>
