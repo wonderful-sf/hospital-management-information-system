@@ -50,6 +50,21 @@ spring.datasource.password=123456
 
 当前 `pom.xml` 只有 MySQL 驱动，没有 JDBC、JPA、MyBatis、MyBatis Plus、Web 或 Thymeleaf starter；实现相关功能时只添加实际需要的 starter。
 
+## 数据库设计资料
+
+- 原始需求：`doc/2026《数据库系统原理与实践》综合设计实验指导书.docx`
+- 设计文档：`doc/数据库设计文档.md`
+- 表结构说明：`doc/表结构说明.md`
+- 建表脚本：`doc/schema.sql`
+- 模拟数据：`doc/seed.sql`
+
+数据库设计约束：不使用物理外键；密码明文存储为 `users.password`；无 `payments` 表；`bills.status` 和 `prescriptions.status` 仅使用 `UNPAID` / `PAID`。
+
+```bash
+mysql -uroot -p123456 < doc/schema.sql
+mysql -uroot -p123456 < doc/seed.sql
+```
+
 ## 本地文件
 
 `.gitignore` 已忽略 `.claude/` 和 `.omc/`，Claude/OMC 会话产物应保持为本地文件。
