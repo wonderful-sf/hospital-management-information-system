@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>工作台 - 医院信息管理系统</title>
+    <link rel="stylesheet" href="/css/app.css">
+</head>
+<body class="admin-page">
+    <div class="admin-shell">
+        <header class="topbar">
+            <div>
+                <strong>医院信息管理系统</strong>
+                <span>Hospital Management Information System</span>
+            </div>
+            <div class="user-area">
+                <span id="currentUser">未登录</span>
+                <button id="logoutButton" type="button">退出</button>
+            </div>
+        </header>
+        <aside class="sidebar">
+            <div class="sidebar-title">功能菜单</div>
+            <nav id="menuList" class="menu-list"></nav>
+        </aside>
+        <main class="content-panel">
+            <section class="page-heading">
+                <p>Dashboard</p>
+                <h1>首页工作台</h1>
+                <span>按角色权限展示可访问菜单，后续模块将在此框架内逐步接入。</span>
+            </section>
+            <section class="stats-grid">
+                <article>
+                    <span>基础资料</span>
+                    <strong>6</strong>
+                    <p>科室、医生、病人、药品、病房、病床</p>
+                </article>
+                <article>
+                    <span>业务模块</span>
+                    <strong>4</strong>
+                    <p>门诊、住院、费用、统计分析</p>
+                </article>
+                <article>
+                    <span>权限模式</span>
+                    <strong>3</strong>
+                    <p>管理员、医生、病人</p>
+                </article>
+            </section>
+            <section class="notice-card">
+                <h2>当前迭代范围</h2>
+                <ul>
+                    <li>Session 登录与退出</li>
+                    <li>MyBatis XML 显式 SQL 查询 users 表</li>
+                    <li>按权限返回菜单并在前端渲染</li>
+                </ul>
+            </section>
+        </main>
+        <footer class="footer">医院信息管理系统 © 2026</footer>
+    </div>
+    <script src="/js/app.js"></script>
+</body>
+</html>
