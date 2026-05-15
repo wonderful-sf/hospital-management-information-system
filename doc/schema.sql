@@ -2,9 +2,11 @@ CREATE DATABASE IF NOT EXISTS hospital DEFAULT CHARACTER SET utf8mb4 COLLATE utf
 USE hospital;
 
 DROP TABLE IF EXISTS bill_items;
+DROP TABLE IF EXISTS payments;
 DROP TABLE IF EXISTS bills;
 DROP TABLE IF EXISTS inpatient_record_items;
 DROP TABLE IF EXISTS inpatient_records;
+DROP TABLE IF EXISTS prepaid_records;
 DROP TABLE IF EXISTS admissions;
 DROP TABLE IF EXISTS beds;
 DROP TABLE IF EXISTS wards;
@@ -25,6 +27,7 @@ CREATE TABLE users (
     username VARCHAR(50) NOT NULL UNIQUE,
     password VARCHAR(100) NOT NULL,
     role ENUM('ADMIN', 'DOCTOR', 'PATIENT') NOT NULL,
+    permissions VARCHAR(500) NOT NULL DEFAULT '[]',
     status ENUM('ACTIVE', 'DISABLED') NOT NULL DEFAULT 'ACTIVE',
     created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
     updated_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
@@ -177,9 +180,11 @@ CREATE TABLE admissions (
     patient_id BIGINT NOT NULL,
     department_id BIGINT NOT NULL,
     attending_doctor_id BIGINT NOT NULL,
-    bed_id BIGINT NOT NULL,
+    bed_id BIGINT DEFAULT NULL,
     admitted_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
     discharged_at DATETIME,
+    discharge_type ENUM('NORMAL', 'AGAINST_ADVICE', 'TRANSFERRED'),
+    prepaid_balance DECIMAL(10, 2) NOT NULL DEFAULT 0,
     status ENUM('ACTIVE', 'DISCHARGED', 'SUSPENDED') NOT NULL DEFAULT 'ACTIVE',
     INDEX idx_admissions_patient_time (patient_id, admitted_at),
     INDEX idx_admissions_doctor_status (attending_doctor_id, status),
@@ -221,6 +226,7 @@ CREATE TABLE bills (
     source_id BIGINT NOT NULL,
     total_amount DECIMAL(10, 2) NOT NULL,
     status ENUM('UNPAID', 'PAID') NOT NULL DEFAULT 'UNPAID',
+    paid_at DATETIME,
     created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
     updated_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
     INDEX idx_bills_patient_time (patient_id, created_at),
@@ -237,4 +243,30 @@ CREATE TABLE bill_items (
     quantity DECIMAL(10, 2) NOT NULL,
     amount DECIMAL(10, 2) NOT NULL,
     INDEX idx_bill_items_bill_id (bill_id)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+CREATE TABLE payments (
+    id BIGINT PRIMARY KEY AUTO_INCREMENT,
+    payment_no VARCHAR(50) NOT NULL UNIQUE,
+    bill_id BIGINT NOT NULL,
+    patient_id BIGINT NOT NULL,
+    amount DECIMAL(10, 2) NOT NULL,
+    payment_method ENUM('CASH', 'ONLINE') NOT NULL,
+    paid_at DATETIME NOT NULL,
+    INDEX idx_payments_bill_id (bill_id),
+    INDEX idx_payments_patient_time (patient_id, paid_at)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+CREATE TABLE prepaid_records (
+    id BIGINT PRIMARY KEY AUTO_INCREMENT,
+    record_no VARCHAR(50) NOT NULL UNIQUE,
+    admission_id BIGINT NOT NULL,
+    patient_id BIGINT NOT NULL,
+    amount DECIMAL(10, 2) NOT NULL,
+    type ENUM('DEPOSIT', 'DEDUCTION', 'REFUND') NOT NULL,
+    balance_after DECIMAL(10, 2) NOT NULL,
+    remark VARCHAR(255),
+    created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    INDEX idx_prepaid_records_admission_id (admission_id),
+    INDEX idx_prepaid_records_patient_time (patient_id, created_at)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;

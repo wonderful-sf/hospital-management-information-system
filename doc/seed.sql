@@ -3,9 +3,11 @@ USE hospital;
 SET NAMES utf8mb4;
 
 DELETE FROM bill_items;
+DELETE FROM payments;
 DELETE FROM bills;
 DELETE FROM inpatient_record_items;
 DELETE FROM inpatient_records;
+DELETE FROM prepaid_records;
 DELETE FROM admissions;
 DELETE FROM beds;
 DELETE FROM wards;
@@ -39,21 +41,23 @@ ALTER TABLE inpatient_records AUTO_INCREMENT = 1;
 ALTER TABLE inpatient_record_items AUTO_INCREMENT = 1;
 ALTER TABLE bills AUTO_INCREMENT = 1;
 ALTER TABLE bill_items AUTO_INCREMENT = 1;
+ALTER TABLE payments AUTO_INCREMENT = 1;
+ALTER TABLE prepaid_records AUTO_INCREMENT = 1;
 
-INSERT INTO users (id, username, password, role, status) VALUES
-(1, 'admin', '123456', 'ADMIN', 'ACTIVE'),
-(2, 'doc_zhang', '123456', 'DOCTOR', 'ACTIVE'),
-(3, 'doc_li', '123456', 'DOCTOR', 'ACTIVE'),
-(4, 'doc_wang', '123456', 'DOCTOR', 'ACTIVE'),
-(5, 'doc_chen', '123456', 'DOCTOR', 'ACTIVE'),
-(6, 'doc_liu', '123456', 'DOCTOR', 'ACTIVE'),
-(7, 'doc_zhao', '123456', 'DOCTOR', 'ACTIVE'),
-(8, 'pat_lin', '123456', 'PATIENT', 'ACTIVE'),
-(9, 'pat_huang', '123456', 'PATIENT', 'ACTIVE'),
-(10, 'pat_zhou', '123456', 'PATIENT', 'ACTIVE'),
-(11, 'pat_wu', '123456', 'PATIENT', 'ACTIVE'),
-(12, 'pat_xu', '123456', 'PATIENT', 'ACTIVE'),
-(13, 'pat_he', '123456', 'PATIENT', 'ACTIVE');
+INSERT INTO users (id, username, password, role, permissions, status) VALUES
+(1, 'admin', '123456', 'ADMIN', '["admin:*"]', 'ACTIVE'),
+(2, 'doc_zhang', '123456', 'DOCTOR', '["doctor:schedule:view","doctor:registration:view","doctor:visit:manage","doctor:prescription:manage","doctor:inpatient:view","doctor:inpatient:manage","doctor:statistics:view"]', 'ACTIVE'),
+(3, 'doc_li', '123456', 'DOCTOR', '["doctor:schedule:view","doctor:registration:view","doctor:visit:manage","doctor:prescription:manage","doctor:inpatient:view","doctor:inpatient:manage","doctor:statistics:view"]', 'ACTIVE'),
+(4, 'doc_wang', '123456', 'DOCTOR', '["doctor:schedule:view","doctor:registration:view","doctor:visit:manage","doctor:prescription:manage","doctor:inpatient:view","doctor:inpatient:manage","doctor:statistics:view"]', 'ACTIVE'),
+(5, 'doc_chen', '123456', 'DOCTOR', '["doctor:schedule:view","doctor:registration:view","doctor:visit:manage","doctor:prescription:manage","doctor:inpatient:view","doctor:inpatient:manage","doctor:statistics:view"]', 'ACTIVE'),
+(6, 'doc_liu', '123456', 'DOCTOR', '["doctor:schedule:view","doctor:registration:view","doctor:visit:manage","doctor:prescription:manage","doctor:inpatient:view","doctor:inpatient:manage","doctor:statistics:view"]', 'ACTIVE'),
+(7, 'doc_zhao', '123456', 'DOCTOR', '["doctor:schedule:view","doctor:registration:view","doctor:visit:manage","doctor:prescription:manage","doctor:inpatient:view","doctor:inpatient:manage","doctor:statistics:view"]', 'ACTIVE'),
+(8, 'pat_lin', '123456', 'PATIENT', '["patient:registration:manage","patient:registration:cancel","patient:visit:view","patient:prescription:view","patient:bill:view","patient:bill:pay","patient:admission:view","patient:prepaid:manage","patient:prepaid:view"]', 'ACTIVE'),
+(9, 'pat_huang', '123456', 'PATIENT', '["patient:registration:manage","patient:registration:cancel","patient:visit:view","patient:prescription:view","patient:bill:view","patient:bill:pay","patient:admission:view","patient:prepaid:manage","patient:prepaid:view"]', 'ACTIVE'),
+(10, 'pat_zhou', '123456', 'PATIENT', '["patient:registration:manage","patient:registration:cancel","patient:visit:view","patient:prescription:view","patient:bill:view","patient:bill:pay","patient:admission:view","patient:prepaid:manage","patient:prepaid:view"]', 'ACTIVE'),
+(11, 'pat_wu', '123456', 'PATIENT', '["patient:registration:manage","patient:registration:cancel","patient:visit:view","patient:prescription:view","patient:bill:view","patient:bill:pay","patient:admission:view","patient:prepaid:manage","patient:prepaid:view"]', 'ACTIVE'),
+(12, 'pat_xu', '123456', 'PATIENT', '["patient:registration:manage","patient:registration:cancel","patient:visit:view","patient:prescription:view","patient:bill:view","patient:bill:pay","patient:admission:view","patient:prepaid:manage","patient:prepaid:view"]', 'ACTIVE'),
+(13, 'pat_he', '123456', 'PATIENT', '["patient:registration:manage","patient:registration:cancel","patient:visit:view","patient:prescription:view","patient:bill:view","patient:bill:pay","patient:admission:view","patient:prepaid:manage","patient:prepaid:view"]', 'ACTIVE');
 
 INSERT INTO departments (id, name, location) VALUES
 (1, '内科', '门诊楼2层A区'),
@@ -144,10 +148,10 @@ INSERT INTO beds (id, ward_id, bed_no, status) VALUES
 (7, 3, '02', 'AVAILABLE'),
 (8, 3, '03', 'MAINTENANCE');
 
-INSERT INTO admissions (id, admission_no, patient_id, department_id, attending_doctor_id, bed_id, admitted_at, discharged_at, status) VALUES
-(1, 'A20260001', 2, 1, 2, 1, '2026-05-13 10:00:00', NULL, 'ACTIVE'),
-(2, 'A20260002', 4, 4, 5, 4, '2026-05-14 09:30:00', NULL, 'ACTIVE'),
-(3, 'A20260003', 5, 5, 6, 6, '2026-05-10 16:20:00', '2026-05-15 10:00:00', 'DISCHARGED');
+INSERT INTO admissions (id, admission_no, patient_id, department_id, attending_doctor_id, bed_id, admitted_at, discharged_at, discharge_type, prepaid_balance, status) VALUES
+(1, 'A20260001', 2, 1, 2, 1, '2026-05-13 10:00:00', NULL, NULL, 1915.00, 'ACTIVE'),
+(2, 'A20260002', 4, 4, 5, 4, '2026-05-14 09:30:00', NULL, NULL, 2920.00, 'ACTIVE'),
+(3, 'A20260003', 5, 5, 6, 6, '2026-05-10 16:20:00', '2026-05-15 10:00:00', 'NORMAL', 0.00, 'DISCHARGED');
 
 INSERT INTO inpatient_records (id, admission_id, record_date, condition_description, treatment_summary, treatment_fee, created_at) VALUES
 (1, 1, '2026-05-14', '胃痛减轻，仍有轻微反酸。', '继续护胃治疗，观察饮食反应。', 45.00, '2026-05-14 09:20:00'),
@@ -164,13 +168,13 @@ INSERT INTO inpatient_record_items (id, inpatient_record_id, item_type, medicine
 (6, 4, 'MEDICINE', 8, '碳酸钙D3片', 42.00, 1.00, '每日一次，每次一片。', 42.00),
 (7, 4, 'TREATMENT', NULL, '骨科康复指导', 78.00, 1.00, '术后康复训练指导。', 78.00);
 
-INSERT INTO bills (id, bill_no, patient_id, source_type, source_id, total_amount, status, created_at) VALUES
-(1, 'B20260001', 1, 'OUTPATIENT', 1, 145.80, 'PAID', '2026-05-15 09:00:00'),
-(2, 'B20260002', 2, 'OUTPATIENT', 2, 62.50, 'UNPAID', '2026-05-15 14:55:00'),
-(3, 'B20260003', 3, 'OUTPATIENT', 3, 128.00, 'PAID', '2026-05-15 09:35:00'),
-(4, 'B20260004', 2, 'INPATIENT', 1, 285.00, 'UNPAID', '2026-05-15 18:00:00'),
-(5, 'B20260005', 4, 'INPATIENT', 2, 240.00, 'UNPAID', '2026-05-15 18:10:00'),
-(6, 'B20260006', 5, 'INPATIENT', 3, 270.00, 'PAID', '2026-05-15 10:30:00');
+INSERT INTO bills (id, bill_no, patient_id, source_type, source_id, total_amount, status, paid_at, created_at) VALUES
+(1, 'B20260001', 1, 'OUTPATIENT', 1, 145.80, 'PAID', '2026-05-15 09:05:00', '2026-05-15 09:00:00'),
+(2, 'B20260002', 2, 'OUTPATIENT', 2, 62.50, 'UNPAID', NULL, '2026-05-15 14:55:00'),
+(3, 'B20260003', 3, 'OUTPATIENT', 3, 128.00, 'PAID', '2026-05-15 09:40:00', '2026-05-15 09:35:00'),
+(4, 'B20260004', 2, 'INPATIENT', 1, 285.00, 'UNPAID', NULL, '2026-05-15 18:00:00'),
+(5, 'B20260005', 4, 'INPATIENT', 2, 240.00, 'UNPAID', NULL, '2026-05-15 18:10:00'),
+(6, 'B20260006', 5, 'INPATIENT', 3, 270.00, 'PAID', '2026-05-15 10:35:00', '2026-05-15 10:30:00');
 
 INSERT INTO bill_items (id, bill_id, item_type, item_name, unit_price, quantity, amount) VALUES
 (1, 1, 'CONSULTATION', '主任医师门诊诊疗费', 80.00, 1.00, 80.00),
@@ -185,3 +189,18 @@ INSERT INTO bill_items (id, bill_id, item_type, item_name, unit_price, quantity,
 (10, 5, 'TREATMENT', '住院治疗费', 80.00, 1.00, 80.00),
 (11, 6, 'BED', '骨科病房床位费', 150.00, 1.00, 150.00),
 (12, 6, 'TREATMENT', '住院治疗费', 120.00, 1.00, 120.00);
+
+INSERT INTO payments (id, payment_no, bill_id, patient_id, amount, payment_method, paid_at) VALUES
+(1, 'PAY202605150001', 1, 1, 145.80, 'ONLINE', '2026-05-15 09:05:00'),
+(2, 'PAY202605150002', 3, 3, 128.00, 'ONLINE', '2026-05-15 09:40:00'),
+(3, 'PAY202605150003', 6, 5, 270.00, 'ONLINE', '2026-05-15 10:35:00');
+
+INSERT INTO prepaid_records (id, record_no, admission_id, patient_id, amount, type, balance_after, remark, created_at) VALUES
+(1, 'PRE202605130001', 1, 2, 2000.00, 'DEPOSIT', 2000.00, '住院预缴', '2026-05-13 10:05:00'),
+(2, 'PRE202605140001', 1, 2, 45.00, 'DEDUCTION', 1955.00, '每日住院费用扣除', '2026-05-14 09:20:00'),
+(3, 'PRE202605150001', 1, 2, 40.00, 'DEDUCTION', 1915.00, '每日住院费用扣除', '2026-05-15 09:10:00'),
+(4, 'PRE202605140002', 2, 4, 3000.00, 'DEPOSIT', 3000.00, '住院预缴', '2026-05-14 09:35:00'),
+(5, 'PRE202605150002', 2, 4, 80.00, 'DEDUCTION', 2920.00, '每日住院费用扣除', '2026-05-15 10:30:00'),
+(6, 'PRE202605100001', 3, 5, 1500.00, 'DEPOSIT', 1500.00, '住院预缴', '2026-05-10 16:25:00'),
+(7, 'PRE202605140003', 3, 5, 120.00, 'DEDUCTION', 1380.00, '每日住院费用扣除', '2026-05-14 15:00:00'),
+(8, 'PRE202605150003', 3, 5, 1380.00, 'REFUND', 0.00, '出院退款', '2026-05-15 10:30:00');
