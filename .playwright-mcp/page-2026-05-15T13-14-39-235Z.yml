@@ -1,0 +1,98 @@
+- generic [ref=e2]:
+  - banner [ref=e3]:
+    - link "医 医院信息管理系统" [ref=e4] [cursor=pointer]:
+      - /url: index.html
+      - generic [ref=e5]: 医
+      - generic [ref=e6]: 医院信息管理系统
+    - navigation "主导航" [ref=e7]:
+      - link "首页" [ref=e8] [cursor=pointer]:
+        - /url: index.html
+      - link "管理员" [ref=e9] [cursor=pointer]:
+        - /url: admin.html
+      - link "医生" [ref=e10] [cursor=pointer]:
+        - /url: doctor.html
+      - link "病人" [ref=e11] [cursor=pointer]:
+        - /url: patient.html
+      - link "住院" [ref=e12] [cursor=pointer]:
+        - /url: inpatient.html
+      - link "费用" [ref=e13] [cursor=pointer]:
+        - /url: billing.html
+      - link "统计" [ref=e14] [cursor=pointer]:
+        - /url: statistics.html
+  - main [ref=e15]:
+    - generic [ref=e16]:
+      - generic [ref=e17]:
+        - generic [ref=e18]: Hospital Management Information System
+        - heading "覆盖门诊、住院、药品、费用与统计的课程实验系统。" [level=1] [ref=e19]
+        - paragraph [ref=e20]: 前端原型基于数据库设计文档和模拟数据构建，展示管理员维护基础资料、医生接诊开方、病人挂号缴费、住院建档与统计分析等核心流程。
+        - generic [ref=e21]:
+          - link "进入管理员端" [ref=e22] [cursor=pointer]:
+            - /url: admin.html
+          - link "医生工作台" [ref=e23] [cursor=pointer]:
+            - /url: doctor.html
+          - link "病人中心" [ref=e24] [cursor=pointer]:
+            - /url: patient.html
+      - generic [ref=e25]:
+        - link "管理员 维护科室、医生、病人、药品、病房和病床等基础资料。" [ref=e26] [cursor=pointer]:
+          - /url: admin.html
+          - strong [ref=e27]: 管理员
+          - paragraph [ref=e28]: 维护科室、医生、病人、药品、病房和病床等基础资料。
+        - link "医生 查看排班、接诊病人、开具处方并维护住院诊疗记录。" [ref=e29] [cursor=pointer]:
+          - /url: doctor.html
+          - strong [ref=e30]: 医生
+          - paragraph [ref=e31]: 查看排班、接诊病人、开具处方并维护住院诊疗记录。
+        - link "病人 完成挂号、缴费，并查询门诊、住院和费用明细。" [ref=e32] [cursor=pointer]:
+          - /url: patient.html
+          - strong [ref=e33]: 病人
+          - paragraph [ref=e34]: 完成挂号、缴费，并查询门诊、住院和费用明细。
+    - generic [ref=e35]:
+      - article [ref=e36]:
+        - text: 科室数量
+        - strong [ref=e37]: "5"
+        - paragraph [ref=e38]: 覆盖门诊与住院重点科室
+      - article [ref=e39]:
+        - text: 医生数量
+        - strong [ref=e40]: "6"
+        - paragraph [ref=e41]: 含主任、副主任、主治医生
+      - article [ref=e42]:
+        - text: 病人档案
+        - strong [ref=e43]: "6"
+        - paragraph [ref=e44]: 支持门诊与住院查询
+      - article [ref=e45]:
+        - text: 待缴账单
+        - strong [ref=e46]: "3"
+        - paragraph [ref=e47]: 线上缴费状态跟踪
+    - generic [ref=e48]:
+      - link "住院部 住院建档与每日记录 展示住院档案、病床安排、主治医生和每日治疗记录。" [ref=e49] [cursor=pointer]:
+        - /url: inpatient.html
+        - generic [ref=e50]: 住院部
+        - heading "住院建档与每日记录" [level=2] [ref=e51]
+        - paragraph [ref=e52]: 展示住院档案、病床安排、主治医生和每日治疗记录。
+      - link "费用模块 账单与线上支付 费用统一进入账单，状态仅区分未支付和已支付。" [ref=e53] [cursor=pointer]:
+        - /url: billing.html
+        - generic [ref=e54]: 费用模块
+        - heading "账单与线上支付" [level=2] [ref=e55]
+        - paragraph [ref=e56]: 费用统一进入账单，状态仅区分未支付和已支付。
+      - link "统计分析 排班、工作量和治疗情况 面向课程展示的轻量统计图表和数据表。" [ref=e57] [cursor=pointer]:
+        - /url: statistics.html
+        - generic [ref=e58]: 统计分析
+        - heading "排班、工作量和治疗情况" [level=2] [ref=e59]
+        - paragraph [ref=e60]: 面向课程展示的轻量统计图表和数据表。
+    - generic [ref=e61]:
+      - generic [ref=e63]:
+        - generic [ref=e64]: 系统概览
+        - heading "关键业务状态" [level=2] [ref=e65]
+      - generic [ref=e66]:
+        - generic [ref=e67]:
+          - generic [ref=e68]: 已支付
+          - strong [ref=e71]: "3"
+        - generic [ref=e72]:
+          - generic [ref=e73]: 未支付
+          - strong [ref=e76]: "3"
+        - generic [ref=e77]:
+          - generic [ref=e78]: 在院
+          - strong [ref=e81]: "2"
+        - generic [ref=e82]:
+          - generic [ref=e83]: 已出院
+          - strong [ref=e86]: "1"
+  - contentinfo [ref=e87]: 基于 hospital 数据库设计的静态前端原型
