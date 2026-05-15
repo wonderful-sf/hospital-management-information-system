@@ -12,7 +12,10 @@ target/
 .settings
 .springBeans
 .sts4-cache
-
+.superpowers
+.gitattributes
+.mvn
+.playwright-mcp
 ### IntelliJ IDEA ###
 .idea
 *.iws
