@@ -17,6 +17,7 @@ import cn.edu.scnu.hospitalmanagementinformationsystem.mapper.OutpatientVisitMap
 import cn.edu.scnu.hospitalmanagementinformationsystem.mapper.PrescriptionItemMapper;
 import cn.edu.scnu.hospitalmanagementinformationsystem.mapper.PrescriptionMapper;
 import java.math.BigDecimal;
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
@@ -144,7 +145,7 @@ class PrescriptionServiceTest {
         when(jdbcTemplate.queryForObject("SELECT LAST_INSERT_ID()", Long.class)).thenReturn(100L);
         when(jdbcTemplate.queryForObject(
             "SELECT MAX(bill_no) FROM bills WHERE bill_no LIKE ?",
-            String.class, "B20260516%")).thenReturn(null);
+            String.class, "B" + LocalDate.now().toString().replace("-", "") + "%")).thenReturn(null);
 
         var prescription = new Prescription(null, 1L, 1L, 1L, new BigDecimal("20.00"), null, null, null, null);
         var result = prescriptionService.create(prescription, List.of(item));

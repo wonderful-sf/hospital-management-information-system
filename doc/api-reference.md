@@ -49,21 +49,24 @@
 
 | 菜单 | 页面 | 权限 |
 |------|------|------|
-| 首页工作台 | `/index.html` | 无 |
-| 科室管理 | `/departments.html` | `admin:*` |
-| 医生管理 | `/doctors.html` | `admin:*` |
-| 病人管理 | `/patients.html` | `admin:*` |
-| 药品管理 | `/medicines.html` | `admin:*` |
-| 病房管理 | `/wards.html` | `admin:*` |
-| 病床管理 | `/beds.html` | `admin:*` |
-| 排班日历 | `/schedules.html` | `doctor:schedule:view` |
-| 挂号管理 | `/registrations.html` | `patient:registration:manage` |
-| 接诊管理 | `/visits.html` | `doctor:visit:manage` |
-| 处方管理 | `/prescriptions.html` | `doctor:prescription:manage` |
-| 我的住院档案 | `/admissions.html` | `patient:admission:view` |
-| 预缴管理 | `/prepaid.html` | `patient:prepaid:manage` |
-| 账单管理 | `/bills.html` | `patient:bill:view` |
-| 统计分析 | `/statistics.html` | `doctor:statistics:view` |
+| 管理员首页 | `/admin` | `admin:*` |
+| 医生首页 | `/doctor` | `doctor:schedule:view` |
+| 病人首页 | `/patient` | `patient:registration:manage` |
+| 科室管理 | `/departments` | `admin:*` |
+| 医生管理 | `/doctors` | `admin:*` |
+| 病人管理 | `/patients` | `admin:*` |
+| 药品管理 | `/medicines` | `admin:*` |
+| 病房管理 | `/wards` | `admin:*` |
+| 病床管理 | `/beds` | `admin:*` |
+| 排班日历 | `/schedules` | `doctor:schedule:view` |
+| 挂号管理 | `/registrations` | `patient:registration:manage` |
+| 接诊管理 | `/visits` | `doctor:visit:manage` |
+| 处方管理 | `/prescriptions` | `doctor:prescription:manage` |
+| 住院记录 | `/inpatient-records` | `doctor:inpatient:manage` |
+| 我的住院档案 | `/admissions` | `patient:admission:view` |
+| 预缴管理 | `/prepaid` | `patient:prepaid:manage` |
+| 账单管理 | `/bills` | `patient:bill:view` |
+| 统计分析 | `/statistics` | `admin:*` |
 
 注意：`admissions.html`、`prepaid.html`、`bills.html`、`statistics.html` 当前并不存在于 `src/main/resources/static/`。
 
@@ -177,9 +180,9 @@ GET /api/auth/menus
   "code": 200,
   "message": "操作成功",
   "data": [
-    { "title": "首页工作台", "href": "/index.html", "permission": "" },
-    { "title": "科室管理", "href": "/departments.html", "permission": "admin:*" },
-    { "title": "排班日历", "href": "/schedules.html", "permission": "doctor:schedule:view" }
+    { "title": "管理员首页", "href": "/admin", "permission": "admin:*" },
+    { "title": "科室管理", "href": "/departments", "permission": "admin:*" },
+    { "title": "统计分析", "href": "/statistics", "permission": "admin:*" }
   ]
 }
 ```
@@ -406,7 +409,7 @@ Base: `/api/beds`
 ### 4.1 医生职称管理
 
 Base: `/api/doctor-titles`
-当前页面：`/doctor-titles.html`
+当前页面：`/doctor-titles`
 
 | 方法 | 路径 | 说明 |
 |------|------|------|
@@ -434,7 +437,7 @@ Base: `/api/doctor-titles`
 ### 4.2 排班管理
 
 Base: `/api/schedules`
-当前页面：`/schedules.html`
+当前页面：`/schedules`
 
 | 方法 | 路径 | 说明 |
 |------|------|------|
@@ -469,7 +472,7 @@ Base: `/api/schedules`
 ### 4.3 挂号管理
 
 Base: `/api/registrations`
-当前页面：`/registrations.html`
+当前页面：`/registrations`
 
 | 方法 | 路径 | 说明 |
 |------|------|------|
@@ -504,7 +507,7 @@ Base: `/api/registrations`
 ### 4.4 接诊管理
 
 Base: `/api/visits`
-当前页面：`/visits.html`
+当前页面：`/visits`
 
 | 方法 | 路径 | 说明 |
 |------|------|------|
@@ -538,7 +541,7 @@ Base: `/api/visits`
 ### 4.5 处方管理
 
 Base: `/api/prescriptions`
-当前页面：`/prescriptions.html`
+当前页面：`/prescriptions`
 
 | 方法 | 路径 | 说明 |
 |------|------|------|
