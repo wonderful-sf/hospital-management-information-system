@@ -129,6 +129,10 @@ input {
     color: #b42318;
 }
 
+.form-message-success {
+    color: #067647;
+}
+
 .demo-users {
     display: grid;
     gap: 4px;

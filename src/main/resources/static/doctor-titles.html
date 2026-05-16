@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>医生管理 - 医院信息管理系统</title>
+    <title>职称管理 - 医院信息管理系统</title>
     <link rel="stylesheet" href="/css/app.css">
     <style>
         .toolbar { display: flex; gap: 12px; margin-bottom: 18px; align-items: center; }
@@ -44,28 +44,24 @@
         <nav id="menuList" class="menu-list"></nav>
     </aside>
     <main class="content-panel">
-        <div class="page-heading"><p>Basic Data</p><h1>医生管理</h1><span>管理医生信息</span></div>
+        <div class="page-heading"><p>Outpatient</p><h1>职称管理</h1><span>管理医生职称</span></div>
         <div class="toolbar" style="margin-top:24px">
-            <input id="searchInput" placeholder="搜索医生姓名..." />
+            <input id="searchInput" placeholder="搜索职称名称..." />
             <button id="searchBtn">搜索</button>
-            <button id="addBtn">新增医生</button>
+            <button id="addBtn">新增职称</button>
         </div>
-        <table><thead><tr><th>ID</th><th>工号</th><th>姓名</th><th>性别</th><th>科室ID</th><th>职称ID</th><th>电话</th><th>操作</th></tr></thead><tbody id="tableBody"></tbody></table>
+        <table><thead><tr><th>ID</th><th>名称</th><th>诊查费</th><th>操作</th></tr></thead><tbody id="tableBody"></tbody></table>
         <div class="pagination" id="pagination"></div>
     </main>
     <footer class="footer">医院信息管理系统 &copy; 2026</footer>
 </div>
 <div class="modal-overlay" id="modal">
     <div class="modal-card">
-        <h2 id="modalTitle">新增医生</h2>
+        <h2 id="modalTitle">新增职称</h2>
         <form id="modalForm">
             <input type="hidden" id="editId" />
-            <label>工号<input id="formEmployeeNo" required /></label>
-            <label>姓名<input id="formName" required /></label>
-            <label>性别<select id="formGender"><option value="MALE">男</option><option value="FEMALE">女</option></select></label>
-            <label>科室<select id="formDepartmentId" required><option value="">请选择科室</option></select></label>
-            <label>职称<select id="formTitleId" required><option value="">请选择职称</option></select></label>
-            <label>电话<input id="formPhone" /></label>
+            <label>名称<input id="formName" required /></label>
+            <label>诊查费<input id="formConsultationFee" type="number" step="0.01" required /></label>
             <div class="modal-actions">
                 <button type="button" class="btn-cancel" id="cancelBtn">取消</button>
                 <button type="submit" class="btn-save">保存</button>
@@ -76,10 +72,8 @@
 <script src="/js/app.js"></script>
 <script>
 (function() {
-var API = '/api/doctors';
+var API = '/api/doctor-titles';
 var keyword = '';
-var departments = [];
-var titles = [];
 
 function loadData() {
     var params = keyword ? '?keyword=' + encodeURIComponent(keyword) : '';
@@ -89,47 +83,11 @@ function loadData() {
         var rows = '';
         for (var i = 0; i < data.length; i++) {
             var d = data[i];
-            rows += '<tr><td>' + d.id + '</td><td>' + esc(d.employeeNo) + '</td><td>' + esc(d.name) + '</td><td>' + (d.gender === 'MALE' ? '男' : '女') + '</td><td>' + d.departmentId + '</td><td>' + d.titleId + '</td><td>' + esc(d.phone||'') + '</td><td><button onclick="editDoctor(' + d.id + ')">编辑</button><button class="danger" onclick="delDoctor(' + d.id + ')">删除</button></td></tr>';
+            rows += '<tr><td>' + d.id + '</td><td>' + esc(d.name) + '</td><td>' + (d.consultationFee != null ? d.consultationFee.toFixed(2) : '') + '</td><td><button onclick="editTitle(' + d.id + ')">编辑</button><button class="danger" onclick="delTitle(' + d.id + ')">删除</button></td></tr>';
         }
-        document.getElementById('tableBody').innerHTML = rows || '<tr><td colspan="8">暂无数据</td></tr>';
+        document.getElementById('tableBody').innerHTML = rows || '<tr><td colspan="4">暂无数据</td></tr>';
         document.getElementById('pagination').textContent = '共 ' + data.length + ' 条';
     });
-}
-
-function loadDepartments() {
-    return requestJson('/api/departments').then(function(result) {
-        departments = result && result.data ? result.data : [];
-        renderDepartmentOptions();
-    });
-}
-
-function loadTitles() {
-    return requestJson('/api/doctor-titles').then(function(result) {
-        titles = result && result.data ? result.data : [];
-        renderTitleOptions();
-    });
-}
-
-function renderDepartmentOptions(selectedValue) {
-    var select = document.getElementById('formDepartmentId');
-    var options = '<option value="">请选择科室</option>';
-    for (var i = 0; i < departments.length; i++) {
-        var department = departments[i];
-        var selected = String(selectedValue || '') === String(department.id) ? ' selected' : '';
-        options += '<option value="' + department.id + '"' + selected + '>' + esc(department.name) + '</option>';
-    }
-    select.innerHTML = options;
-}
-
-function renderTitleOptions(selectedValue) {
-    var select = document.getElementById('formTitleId');
-    var options = '<option value="">请选择职称</option>';
-    for (var i = 0; i < titles.length; i++) {
-        var title = titles[i];
-        var selected = String(selectedValue || '') === String(title.id) ? ' selected' : '';
-        options += '<option value="' + title.id + '"' + selected + '>' + esc(title.name) + '</option>';
-    }
-    select.innerHTML = options;
 }
 
 function esc(text) { var d = document.createElement('div'); d.textContent = text || ''; return d.innerHTML; }
@@ -138,30 +96,26 @@ function openModal(title, data) {
     clearPageMessage();
     document.getElementById('modalTitle').textContent = title;
     document.getElementById('editId').value = data ? data.id : '';
-    document.getElementById('formEmployeeNo').value = data ? data.employeeNo : '';
     document.getElementById('formName').value = data ? data.name : '';
-    document.getElementById('formGender').value = data ? data.gender : 'MALE';
-    renderDepartmentOptions(data ? data.departmentId : '');
-    renderTitleOptions(data ? data.titleId : '');
-    document.getElementById('formPhone').value = data ? data.phone || '' : '';
+    document.getElementById('formConsultationFee').value = data ? data.consultationFee : '';
     document.getElementById('modal').classList.add('open');
 }
 
-window.editDoctor = function(id) {
+window.editTitle = function(id) {
     requestJson(API).then(function(result) {
         if (!result) return;
         var data = result.data || [];
         for (var i = 0; i < data.length; i++) {
-            if (data[i].id === id) { openModal('编辑医生', data[i]); return; }
+            if (data[i].id === id) { openModal('编辑职称', data[i]); return; }
         }
     });
 };
 
-window.delDoctor = function(id) {
-    if (!confirm('确认删除该医生？')) return;
+window.delTitle = function(id) {
+    if (!confirm('确认删除该职称？')) return;
     requestJson(API + '/' + id, { method: 'DELETE' }).then(function(result) {
         if (result) {
-            setPageSuccess('医生删除成功。');
+            setPageSuccess('职称删除成功。');
             loadData();
         }
     });
@@ -169,37 +123,25 @@ window.delDoctor = function(id) {
 
 document.getElementById('searchBtn').addEventListener('click', function() { keyword = document.getElementById('searchInput').value.trim(); loadData(); });
 document.getElementById('searchInput').addEventListener('keydown', function(e) { if (e.key === 'Enter') { keyword = e.target.value.trim(); loadData(); } });
-document.getElementById('addBtn').addEventListener('click', function() { openModal('新增医生'); });
+document.getElementById('addBtn').addEventListener('click', function() { openModal('新增职称'); });
 document.getElementById('cancelBtn').addEventListener('click', function() { document.getElementById('modal').classList.remove('open'); });
 
 document.getElementById('modalForm').addEventListener('submit', function(e) {
     e.preventDefault();
     var id = document.getElementById('editId').value;
-    var payload = {
-        employeeNo: document.getElementById('formEmployeeNo').value,
-        name: document.getElementById('formName').value,
-        gender: document.getElementById('formGender').value,
-        departmentId: parseInt(document.getElementById('formDepartmentId').value),
-        titleId: parseInt(document.getElementById('formTitleId').value),
-        phone: document.getElementById('formPhone').value
-    };
+    var payload = { name: document.getElementById('formName').value, consultationFee: parseFloat(document.getElementById('formConsultationFee').value) };
     var url = id ? API + '/' + id : API;
     var options = { method: id ? 'PUT' : 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) };
     requestJson(url, options).then(function(result) {
         if (result) {
             document.getElementById('modal').classList.remove('open');
             document.getElementById('modalForm').reset();
-            renderDepartmentOptions();
-            renderTitleOptions();
-            setPageSuccess(id ? '医生更新成功。' : '医生新增成功。');
+            setPageSuccess(id ? '职称更新成功。' : '职称新增成功。');
             loadData();
         }
     });
 });
-
-Promise.all([loadDepartments(), loadTitles()]).then(function() {
-    loadData();
-});
+loadData();
 })();
 </script>
 </body>

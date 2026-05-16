@@ -1,0 +1,55 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+    PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+    "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="cn.edu.scnu.hospitalmanagementinformationsystem.mapper.OutpatientVisitMapper">
+    <resultMap id="OutpatientVisitResultMap" type="cn.edu.scnu.hospitalmanagementinformationsystem.entity.OutpatientVisit">
+        <constructor>
+            <idArg column="id" javaType="java.lang.Long" />
+            <arg column="registration_id" javaType="java.lang.Long" />
+            <arg column="patient_id" javaType="java.lang.Long" />
+            <arg column="doctor_id" javaType="java.lang.Long" />
+            <arg column="symptom_description" javaType="java.lang.String" />
+            <arg column="diagnosis" javaType="java.lang.String" />
+            <arg column="visited_at" javaType="java.time.LocalDateTime" />
+        </constructor>
+    </resultMap>
+
+    <select id="findAll" resultMap="OutpatientVisitResultMap">
+        SELECT id, registration_id, patient_id, doctor_id, symptom_description, diagnosis, visited_at
+        FROM outpatient_visits
+        <where>
+            <if test="doctorId != null">
+                AND doctor_id = #{doctorId}
+            </if>
+            <if test="patientId != null">
+                AND patient_id = #{patientId}
+            </if>
+        </where>
+        ORDER BY visited_at DESC, id DESC
+    </select>
+
+    <select id="findById" resultMap="OutpatientVisitResultMap">
+        SELECT id, registration_id, patient_id, doctor_id, symptom_description, diagnosis, visited_at
+        FROM outpatient_visits
+        WHERE id = #{id}
+    </select>
+
+    <select id="findByRegistrationId" resultMap="OutpatientVisitResultMap">
+        SELECT id, registration_id, patient_id, doctor_id, symptom_description, diagnosis, visited_at
+        FROM outpatient_visits
+        WHERE registration_id = #{registrationId}
+    </select>
+
+    <insert id="insert">
+        INSERT INTO outpatient_visits (registration_id, patient_id, doctor_id, symptom_description, diagnosis, visited_at)
+        VALUES (#{registrationId}, #{patientId}, #{doctorId}, #{symptomDescription}, #{diagnosis}, #{visitedAt})
+    </insert>
+
+    <update id="update">
+        UPDATE outpatient_visits
+        SET symptom_description = #{symptomDescription},
+            diagnosis = #{diagnosis}
+        WHERE id = #{id}
+    </update>
+</mapper>

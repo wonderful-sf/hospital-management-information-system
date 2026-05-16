@@ -2,24 +2,54 @@ function redirectToLogin() {
     window.location.href = '/login.html';
 }
 
-function setPageError(message) {
-    const existingError = document.querySelector('#pageError');
-    if (existingError) {
-        existingError.textContent = message;
-        return;
-    }
-
+function getPageMessageElement() {
     const contentPanel = document.querySelector('.content-panel');
     if (!contentPanel) {
+        return null;
+    }
+
+    let messageElement = contentPanel.querySelector('#pageMessage');
+    if (!messageElement) {
+        messageElement = document.createElement('p');
+        messageElement.id = 'pageMessage';
+        messageElement.className = 'form-message';
+        contentPanel.prepend(messageElement);
+    }
+
+    return messageElement;
+}
+
+function clearPageMessage() {
+    const existingMessage = document.querySelector('#pageMessage');
+    if (existingMessage) {
+        existingMessage.remove();
+    }
+}
+
+function clearPageError() {
+    const existingMessage = document.querySelector('#pageMessage');
+    if (existingMessage && !existingMessage.classList.contains('form-message-success')) {
+        existingMessage.remove();
+    }
+}
+
+function setPageMessage(message, type) {
+    const messageElement = getPageMessageElement();
+    if (!messageElement) {
         window.alert(message);
         return;
     }
 
-    const errorMessage = document.createElement('p');
-    errorMessage.id = 'pageError';
-    errorMessage.className = 'form-message';
-    errorMessage.textContent = message;
-    contentPanel.prepend(errorMessage);
+    messageElement.className = type === 'success' ? 'form-message form-message-success' : 'form-message';
+    messageElement.textContent = message;
+}
+
+function setPageError(message) {
+    setPageMessage(message, 'error');
+}
+
+function setPageSuccess(message) {
+    setPageMessage(message, 'success');
 }
 
 async function requestJson(url, options = {}) {
@@ -49,6 +79,7 @@ async function requestJson(url, options = {}) {
         return null;
     }
 
+    clearPageError();
     return result;
 }
 

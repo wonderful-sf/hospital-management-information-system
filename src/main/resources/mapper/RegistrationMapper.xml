@@ -1,0 +1,63 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+    PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+    "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="cn.edu.scnu.hospitalmanagementinformationsystem.mapper.RegistrationMapper">
+    <resultMap id="RegistrationResultMap" type="cn.edu.scnu.hospitalmanagementinformationsystem.entity.Registration">
+        <constructor>
+            <idArg column="id" javaType="java.lang.Long" />
+            <arg column="patient_id" javaType="java.lang.Long" />
+            <arg column="doctor_id" javaType="java.lang.Long" />
+            <arg column="department_id" javaType="java.lang.Long" />
+            <arg column="schedule_id" javaType="java.lang.Long" />
+            <arg column="visit_type" javaType="java.lang.String" />
+            <arg column="registered_at" javaType="java.time.LocalDateTime" />
+            <arg column="status" javaType="java.lang.String" />
+        </constructor>
+    </resultMap>
+
+    <select id="findAll" resultMap="RegistrationResultMap">
+        SELECT id, patient_id, doctor_id, department_id, schedule_id, visit_type, registered_at, status
+        FROM registrations
+        <where>
+            <if test="patientId != null">
+                patient_id = #{patientId}
+            </if>
+        </where>
+        ORDER BY id
+    </select>
+
+    <select id="findById" resultMap="RegistrationResultMap">
+        SELECT id, patient_id, doctor_id, department_id, schedule_id, visit_type, registered_at, status
+        FROM registrations
+        WHERE id = #{id}
+    </select>
+
+    <insert id="insert" useGeneratedKeys="true" keyProperty="id">
+        INSERT INTO registrations (patient_id, doctor_id, department_id, schedule_id, visit_type, registered_at, status)
+        VALUES (#{patientId}, #{doctorId}, #{departmentId}, #{scheduleId}, #{visitType}, #{registeredAt}, #{status})
+    </insert>
+
+    <update id="update">
+        UPDATE registrations
+        SET patient_id = #{patientId},
+            doctor_id = #{doctorId},
+            department_id = #{departmentId},
+            schedule_id = #{scheduleId},
+            visit_type = #{visitType},
+            status = #{status}
+        WHERE id = #{id}
+    </update>
+
+    <update id="cancelById">
+        UPDATE registrations
+        SET status = 'CANCELLED'
+        WHERE id = #{id}
+    </update>
+
+    <update id="updateStatus">
+        UPDATE registrations
+        SET status = #{status}
+        WHERE id = #{id}
+    </update>
+</mapper>

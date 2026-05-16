@@ -4,7 +4,7 @@
 
 ### 1.1 响应信封
 
-所有 API 响应统一使用以下结构：
+当前已实现接口统一返回以下结构：
 
 ```json
 {
@@ -16,35 +16,56 @@
 
 | 字段 | 类型 | 说明 |
 |------|------|------|
-| `code` | int | 状态码，200 表示成功 |
+| `code` | int | 业务状态码，200 表示成功 |
 | `message` | string | 操作结果描述 |
 | `data` | any | 响应数据，错误时为 `null` |
 
-### 1.2 错误码
+实现位置：`src/main/java/cn/edu/scnu/hospitalmanagementinformationsystem/dto/ApiResponse.java`
+
+### 1.2 当前已使用的错误码
 
 | code | 说明 |
 |------|------|
 | 200 | 成功 |
-| 400 | 参数校验失败 |
-| 401 | 未登录 |
-| 403 | 无权限 |
-| 404 | 资源不存在 |
-| 409 | 业务冲突（名称重复、资源被占用等） |
-| 500 | 服务器内部错误 |
+| 400 | 参数缺失或请求体非法 |
+| 401 | 未登录 / 账号密码错误 |
+| 500 | 运行时异常，当前未统一包装 |
+
+说明：`403`、`404`、`409` 仍属于总体设计中的通用规范，但在当前 Controller 实现中未形成统一返回约定。
 
 ### 1.3 认证方式
 
-基于 Session 的账号密码登录。登录成功后，后续请求自动携带 Session Cookie。所有业务 API 需登录后访问，由拦截器统一校验。
+基于 Session 的账号密码登录。登录成功后，后续请求依赖浏览器自动携带 Session Cookie。
 
-### 1.4 权限模型
+当前代码层面的已实现认证规则：
 
-| 角色 | 标识 | 权限范围 |
-|------|------|----------|
-| 管理员 | `ADMIN` | `admin:*` 全部权限 |
-| 医生 | `DOCTOR` | `doctor:schedule:view`, `doctor:visit:manage`, `doctor:prescription:manage`, `doctor:inpatient:view`, `doctor:inpatient:manage`, `doctor:statistics:view` |
-| 病人 | `PATIENT` | `patient:registration:manage`, `patient:registration:cancel`, `patient:visit:view`, `patient:prescription:view`, `patient:bill:view`, `patient:bill:pay`, `patient:admission:view`, `patient:prepaid:manage`, `patient:prepaid:view` |
+- `/api/auth/login` 不要求登录
+- `/api/auth/me` 与 `/api/auth/menus` 会在 Controller 中直接检查 Session
+- 业务接口文档按“应有权限”标注，但当前源码中未看到统一登录拦截器或权限拦截器
 
-基础资料管理模块（科室/医生/病人/药品/病房/病床）的增删改查仅限管理员访问。
+### 1.4 菜单与权限现状
+
+`AuthService.ALL_MENUS` 当前定义了以下菜单权限：
+
+| 菜单 | 页面 | 权限 |
+|------|------|------|
+| 首页工作台 | `/index.html` | 无 |
+| 科室管理 | `/departments.html` | `admin:*` |
+| 医生管理 | `/doctors.html` | `admin:*` |
+| 病人管理 | `/patients.html` | `admin:*` |
+| 药品管理 | `/medicines.html` | `admin:*` |
+| 病房管理 | `/wards.html` | `admin:*` |
+| 病床管理 | `/beds.html` | `admin:*` |
+| 排班日历 | `/schedules.html` | `doctor:schedule:view` |
+| 挂号管理 | `/registrations.html` | `patient:registration:manage` |
+| 接诊管理 | `/visits.html` | `doctor:visit:manage` |
+| 处方管理 | `/prescriptions.html` | `doctor:prescription:manage` |
+| 我的住院档案 | `/admissions.html` | `patient:admission:view` |
+| 预缴管理 | `/prepaid.html` | `patient:prepaid:manage` |
+| 账单管理 | `/bills.html` | `patient:bill:view` |
+| 统计分析 | `/statistics.html` | `doctor:statistics:view` |
+
+注意：`admissions.html`、`prepaid.html`、`bills.html`、`statistics.html` 当前并不存在于 `src/main/resources/static/`。
 
 ---
 
@@ -59,7 +80,7 @@ POST /api/auth/login
 权限: 无
 ```
 
-**请求体:**
+**请求体：**
 
 ```json
 {
@@ -73,7 +94,7 @@ POST /api/auth/login
 | `username` | string | 是 | 登录账号 |
 | `password` | string | 是 | 登录密码 |
 
-**成功响应 (200):**
+**成功响应：**
 
 ```json
 {
@@ -88,7 +109,7 @@ POST /api/auth/login
 }
 ```
 
-**失败响应 (400):** 账号或密码为空
+**失败响应（400）：**
 
 ```json
 {
@@ -98,7 +119,7 @@ POST /api/auth/login
 }
 ```
 
-**失败响应 (401):** 账号不存在或密码错误
+**失败响应（401）：**
 
 ```json
 {
@@ -115,7 +136,7 @@ GET /api/auth/me
 权限: 已登录
 ```
 
-**成功响应 (200):**
+**成功响应：**
 
 ```json
 {
@@ -130,7 +151,15 @@ GET /api/auth/me
 }
 ```
 
-**失败响应 (401):** 未登录
+**失败响应（401）：**
+
+```json
+{
+  "code": 401,
+  "message": "未登录",
+  "data": null
+}
+```
 
 ### 2.3 获取菜单
 
@@ -139,9 +168,9 @@ GET /api/auth/menus
 权限: 已登录
 ```
 
-根据当前用户权限返回可见菜单列表。
+返回当前用户有权看到的菜单列表。
 
-**成功响应 (200):**
+**成功响应：**
 
 ```json
 {
@@ -155,14 +184,6 @@ GET /api/auth/menus
 }
 ```
 
-| 字段 | 类型 | 说明 |
-|------|------|------|
-| `title` | string | 菜单名称 |
-| `href` | string | 页面路径 |
-| `permission` | string | 所需权限标识，空字符串表示无需特殊权限 |
-
-**失败响应 (401):** 未登录
-
 ### 2.4 退出登录
 
 ```
@@ -170,9 +191,7 @@ POST /api/auth/logout
 权限: 已登录
 ```
 
-销毁当前 Session。
-
-**成功响应 (200):**
+**成功响应：**
 
 ```json
 {
@@ -186,12 +205,19 @@ POST /api/auth/logout
 
 ## 3. 基础资料模块
 
-基础资料模块每个资源的 API 模式统一：列表查询支持可选关键词搜索，增删改查路径一致。
+以下 6 组接口均已在当前代码中实现，接口风格统一：
+
+- `GET /api/<resource>`：列表查询
+- `POST /api/<resource>`：新增
+- `PUT /api/<resource>/{id}`：编辑
+- `DELETE /api/<resource>/{id}`：删除
+
+说明：以下“权限”是菜单配置和设计目标；当前未看到统一后端权限拦截器。
 
 ### 3.1 科室管理
 
 Base: `/api/departments`
-权限: `admin:*`
+权限目标：`admin:*`
 
 | 方法 | 路径 | 说明 |
 |------|------|------|
@@ -200,72 +226,26 @@ Base: `/api/departments`
 | PUT | `/api/departments/{id}` | 编辑科室 |
 | DELETE | `/api/departments/{id}` | 删除科室 |
 
-**Department 实体:**
+**查询参数：**
+
+| 参数 | 类型 | 必填 | 说明 |
+|------|------|------|------|
+| `keyword` | string | 否 | 按名称模糊搜索 |
+
+**Department 实体：**
 
 ```json
 {
   "id": 1,
   "name": "内科",
-  "description": "内科科室",
-  "status": "ACTIVE"
+  "location": "门诊楼二层"
 }
 ```
-
-| 字段 | 类型 | 说明 |
-|------|------|------|
-| `id` | Long | 主键 |
-| `name` | String | 科室名称 |
-| `description` | String | 科室描述 |
-| `status` | String | 状态（ACTIVE / DISABLED） |
-
-**GET /api/departments** — 列表查询
-
-| 参数 | 类型 | 必填 | 说明 |
-|------|------|------|------|
-| `keyword` | string | 否 | 搜索关键词，匹配科室名称 |
-
-```json
-// GET /api/departments
-{ "code": 200, "message": "操作成功", "data": [ { "id": 1, "name": "内科", "description": "内科科室", "status": "ACTIVE" } ] }
-
-// GET /api/departments?keyword=内科
-{ "code": 200, "message": "操作成功", "data": [ { "id": 1, "name": "内科", "description": "内科科室", "status": "ACTIVE" } ] }
-```
-
-**POST /api/departments** — 新增
-
-请求体（`id` 字段无需传递，由数据库自动生成）:
-
-```json
-{
-  "name": "内科",
-  "description": "内科科室",
-  "status": "ACTIVE"
-}
-```
-
-**PUT /api/departments/{id}** — 编辑
-
-请求体需包含完整字段：
-
-```json
-{
-  "name": "内科",
-  "description": "更新后的描述",
-  "status": "ACTIVE"
-}
-```
-
-**DELETE /api/departments/{id}** — 删除
-
-软删除，将状态标记为已删除。
-
----
 
 ### 3.2 医生管理
 
 Base: `/api/doctors`
-权限: `admin:*`
+权限目标：`admin:*`
 
 | 方法 | 路径 | 说明 |
 |------|------|------|
@@ -274,7 +254,13 @@ Base: `/api/doctors`
 | PUT | `/api/doctors/{id}` | 编辑医生 |
 | DELETE | `/api/doctors/{id}` | 删除医生 |
 
-**Doctor 实体:**
+**查询参数：**
+
+| 参数 | 类型 | 必填 | 说明 |
+|------|------|------|------|
+| `keyword` | string | 否 | 匹配医生姓名或工号 |
+
+**Doctor 实体：**
 
 ```json
 {
@@ -289,53 +275,10 @@ Base: `/api/doctors`
 }
 ```
 
-| 字段 | 类型 | 说明 |
-|------|------|------|
-| `id` | Long | 主键 |
-| `userId` | Long | 关联 users 表 ID |
-| `departmentId` | Long | 所属科室 ID |
-| `titleId` | Long | 职称 ID |
-| `employeeNo` | String | 工号 |
-| `name` | String | 医生姓名 |
-| `gender` | String | 性别：`MALE` / `FEMALE` |
-| `phone` | String | 联系电话 |
-
-**GET /api/doctors** — 列表查询
-
-| 参数 | 类型 | 必填 | 说明 |
-|------|------|------|------|
-| `keyword` | string | 否 | 搜索关键词，匹配医生姓名或工号 |
-
-**POST /api/doctors** — 新增
-
-请求体（`id` 字段无需传递）:
-
-```json
-{
-  "userId": 2,
-  "departmentId": 1,
-  "titleId": 1,
-  "employeeNo": "D001",
-  "name": "张三",
-  "gender": "MALE",
-  "phone": "13800000000"
-}
-```
-
-**PUT /api/doctors/{id}** — 编辑
-
-请求体需包含完整字段。
-
-**DELETE /api/doctors/{id}** — 删除
-
-物理删除。
-
----
-
 ### 3.3 病人管理
 
 Base: `/api/patients`
-权限: `admin:*`
+权限目标：`admin:*`
 
 | 方法 | 路径 | 说明 |
 |------|------|------|
@@ -344,7 +287,13 @@ Base: `/api/patients`
 | PUT | `/api/patients/{id}` | 编辑病人 |
 | DELETE | `/api/patients/{id}` | 删除病人 |
 
-**Patient 实体:**
+**查询参数：**
+
+| 参数 | 类型 | 必填 | 说明 |
+|------|------|------|------|
+| `keyword` | string | 否 | 匹配病人姓名或病历号 |
+
+**Patient 实体：**
 
 ```json
 {
@@ -358,51 +307,10 @@ Base: `/api/patients`
 }
 ```
 
-| 字段 | 类型 | 说明 |
-|------|------|------|
-| `id` | Long | 主键 |
-| `userId` | Long | 关联 users 表 ID |
-| `medicalRecordNo` | String | 病历号 |
-| `name` | String | 病人姓名 |
-| `gender` | String | 性别：`MALE` / `FEMALE` |
-| `phone` | String | 联系电话 |
-| `address` | String | 地址 |
-
-**GET /api/patients** — 列表查询
-
-| 参数 | 类型 | 必填 | 说明 |
-|------|------|------|------|
-| `keyword` | string | 否 | 搜索关键词，匹配病人姓名或病历号 |
-
-**POST /api/patients** — 新增
-
-请求体（`id` 字段无需传递）:
-
-```json
-{
-  "userId": 3,
-  "medicalRecordNo": "MR001",
-  "name": "李四",
-  "gender": "FEMALE",
-  "phone": "13900000000",
-  "address": "广东省广州市"
-}
-```
-
-**PUT /api/patients/{id}** — 编辑
-
-请求体需包含完整字段。
-
-**DELETE /api/patients/{id}** — 删除
-
-物理删除。
-
----
-
 ### 3.4 药品管理
 
 Base: `/api/medicines`
-权限: `admin:*`
+权限目标：`admin:*`
 
 | 方法 | 路径 | 说明 |
 |------|------|------|
@@ -411,7 +319,13 @@ Base: `/api/medicines`
 | PUT | `/api/medicines/{id}` | 编辑药品 |
 | DELETE | `/api/medicines/{id}` | 删除药品 |
 
-**Medicine 实体:**
+**查询参数：**
+
+| 参数 | 类型 | 必填 | 说明 |
+|------|------|------|------|
+| `keyword` | string | 否 | 匹配药品名称或编码 |
+
+**Medicine 实体：**
 
 ```json
 {
@@ -420,59 +334,16 @@ Base: `/api/medicines`
   "name": "阿莫西林",
   "specification": "0.25g×24粒",
   "unit": "盒",
-  "unitPrice": 12.50,
+  "unitPrice": 12.5,
   "stockQuantity": 100,
   "status": "ACTIVE"
 }
 ```
-
-| 字段 | 类型 | 说明 |
-|------|------|------|
-| `id` | Long | 主键 |
-| `code` | String | 药品编码 |
-| `name` | String | 药品名称 |
-| `specification` | String | 规格 |
-| `unit` | String | 单位 |
-| `unitPrice` | BigDecimal | 单价（元，保留两位小数） |
-| `stockQuantity` | Integer | 库存数量 |
-| `status` | String | 状态：`ACTIVE` / `DISABLED` |
-
-**GET /api/medicines** — 列表查询
-
-| 参数 | 类型 | 必填 | 说明 |
-|------|------|------|------|
-| `keyword` | string | 否 | 搜索关键词，匹配药品名称或编码 |
-
-**POST /api/medicines** — 新增
-
-请求体（`id` 字段无需传递）:
-
-```json
-{
-  "code": "M001",
-  "name": "阿莫西林",
-  "specification": "0.25g×24粒",
-  "unit": "盒",
-  "unitPrice": 12.50,
-  "stockQuantity": 100,
-  "status": "ACTIVE"
-}
-```
-
-**PUT /api/medicines/{id}** — 编辑
-
-请求体需包含完整字段。
-
-**DELETE /api/medicines/{id}** — 删除
-
-物理删除。
-
----
 
 ### 3.5 病房管理
 
 Base: `/api/wards`
-权限: `admin:*`
+权限目标：`admin:*`
 
 | 方法 | 路径 | 说明 |
 |------|------|------|
@@ -481,7 +352,13 @@ Base: `/api/wards`
 | PUT | `/api/wards/{id}` | 编辑病房 |
 | DELETE | `/api/wards/{id}` | 删除病房 |
 
-**Ward 实体:**
+**查询参数：**
+
+| 参数 | 类型 | 必填 | 说明 |
+|------|------|------|------|
+| `keyword` | string | 否 | 匹配病房编号 |
+
+**Ward 实体：**
 
 ```json
 {
@@ -489,51 +366,14 @@ Base: `/api/wards`
   "departmentId": 1,
   "wardNo": "W001",
   "location": "3楼A区",
-  "dailyCharge": 200.00
+  "dailyCharge": 200.0
 }
 ```
-
-| 字段 | 类型 | 说明 |
-|------|------|------|
-| `id` | Long | 主键 |
-| `departmentId` | Long | 所属科室 ID |
-| `wardNo` | String | 病房编号 |
-| `location` | String | 位置 |
-| `dailyCharge` | BigDecimal | 每日费用（元，保留两位小数） |
-
-**GET /api/wards** — 列表查询
-
-| 参数 | 类型 | 必填 | 说明 |
-|------|------|------|------|
-| `keyword` | string | 否 | 搜索关键词，匹配病房编号 |
-
-**POST /api/wards** — 新增
-
-请求体（`id` 字段无需传递）:
-
-```json
-{
-  "departmentId": 1,
-  "wardNo": "W001",
-  "location": "3楼A区",
-  "dailyCharge": 200.00
-}
-```
-
-**PUT /api/wards/{id}** — 编辑
-
-请求体需包含完整字段。
-
-**DELETE /api/wards/{id}** — 删除
-
-物理删除。
-
----
 
 ### 3.6 病床管理
 
 Base: `/api/beds`
-权限: `admin:*`
+权限目标：`admin:*`
 
 | 方法 | 路径 | 说明 |
 |------|------|------|
@@ -542,7 +382,13 @@ Base: `/api/beds`
 | PUT | `/api/beds/{id}` | 编辑病床 |
 | DELETE | `/api/beds/{id}` | 删除病床 |
 
-**Bed 实体:**
+**查询参数：**
+
+| 参数 | 类型 | 必填 | 说明 |
+|------|------|------|------|
+| `keyword` | string | 否 | 匹配病床编号 |
+
+**Bed 实体：**
 
 ```json
 {
@@ -553,70 +399,291 @@ Base: `/api/beds`
 }
 ```
 
-| 字段 | 类型 | 说明 |
-|------|------|------|
-| `id` | Long | 主键 |
-| `wardId` | Long | 所属病房 ID |
-| `bedNo` | String | 病床编号 |
-| `status` | String | 状态：`AVAILABLE` / `OCCUPIED` / `MAINTENANCE` |
+---
 
-**GET /api/beds** — 列表查询
+## 4. 门诊模块
+
+### 4.1 医生职称管理
+
+Base: `/api/doctor-titles`
+当前页面：`/doctor-titles.html`
+
+| 方法 | 路径 | 说明 |
+|------|------|------|
+| GET | `/api/doctor-titles` | 查询职称列表 |
+| POST | `/api/doctor-titles` | 新增职称 |
+| PUT | `/api/doctor-titles/{id}` | 编辑职称 |
+| DELETE | `/api/doctor-titles/{id}` | 删除职称 |
+
+**查询参数：**
 
 | 参数 | 类型 | 必填 | 说明 |
 |------|------|------|------|
-| `keyword` | string | 否 | 搜索关键词，匹配病床编号 |
+| `keyword` | string | 否 | 匹配职称名称 |
 
-**POST /api/beds** — 新增
-
-请求体（`id` 字段无需传递）:
+**DoctorTitle 实体：**
 
 ```json
 {
-  "wardId": 1,
-  "bedNo": "B001",
-  "status": "AVAILABLE"
+  "id": 1,
+  "name": "主任医师",
+  "consultationFee": 30.0
 }
 ```
 
-**PUT /api/beds/{id}** — 编辑
+### 4.2 排班管理
 
-请求体需包含完整字段。
+Base: `/api/schedules`
+当前页面：`/schedules.html`
 
-**DELETE /api/beds/{id}** — 删除
+| 方法 | 路径 | 说明 |
+|------|------|------|
+| GET | `/api/schedules` | 查询排班列表 |
+| POST | `/api/schedules` | 新增排班 |
+| PUT | `/api/schedules/{id}` | 编辑排班 |
+| DELETE | `/api/schedules/{id}` | 删除排班 |
 
-物理删除。
+**查询参数：**
+
+| 参数 | 类型 | 必填 | 说明 |
+|------|------|------|------|
+| `doctorId` | Long | 否 | 按医生筛选 |
+| `departmentId` | Long | 否 | 按科室筛选 |
+
+**DoctorSchedule 实体：**
+
+```json
+{
+  "id": 1,
+  "doctorId": 1,
+  "departmentId": 1,
+  "scheduleType": "OUTPATIENT",
+  "startTime": "2026-05-16T09:00:00",
+  "endTime": "2026-05-16T12:00:00",
+  "room": "门诊201"
+}
+```
+
+说明：当前实现未包含排班冲突校验、按角色自动过滤和历史排班只读规则。
+
+### 4.3 挂号管理
+
+Base: `/api/registrations`
+当前页面：`/registrations.html`
+
+| 方法 | 路径 | 说明 |
+|------|------|------|
+| GET | `/api/registrations` | 查询挂号列表 |
+| POST | `/api/registrations` | 新增挂号 |
+| PUT | `/api/registrations/{id}` | 编辑挂号 |
+| DELETE | `/api/registrations/{id}` | 取消挂号 |
+
+**查询参数：**
+
+| 参数 | 类型 | 必填 | 说明 |
+|------|------|------|------|
+| `patientId` | Long | 否 | 按病人筛选 |
+
+**Registration 实体：**
+
+```json
+{
+  "id": 1,
+  "patientId": 1,
+  "doctorId": 1,
+  "departmentId": 1,
+  "scheduleId": 1,
+  "visitType": "FIRST",
+  "registeredAt": "2026-05-16T09:30:00",
+  "status": "REGISTERED"
+}
+```
+
+说明：当前删除逻辑会调用取消方法；是否仅允许 `REGISTERED` 取消，取决于底层 SQL 与后续业务约束，Controller/Service 层未显式校验。
+
+### 4.4 接诊管理
+
+Base: `/api/visits`
+当前页面：`/visits.html`
+
+| 方法 | 路径 | 说明 |
+|------|------|------|
+| GET | `/api/visits` | 查询接诊列表 |
+| POST | `/api/visits` | 新增接诊 |
+| PUT | `/api/visits/{id}` | 编辑接诊 |
+
+**查询参数：**
+
+| 参数 | 类型 | 必填 | 说明 |
+|------|------|------|------|
+| `doctorId` | Long | 否 | 按医生筛选 |
+| `patientId` | Long | 否 | 按病人筛选 |
+
+**OutpatientVisit 实体：**
+
+```json
+{
+  "id": 1,
+  "registrationId": 1,
+  "patientId": 1,
+  "doctorId": 1,
+  "symptomDescription": "发热咳嗽",
+  "diagnosis": "上呼吸道感染",
+  "visitedAt": "2026-05-16T10:00:00"
+}
+```
+
+说明：当前创建接诊时会把对应挂号状态更新为 `VISITED`。
+
+### 4.5 处方管理
+
+Base: `/api/prescriptions`
+当前页面：`/prescriptions.html`
+
+| 方法 | 路径 | 说明 |
+|------|------|------|
+| GET | `/api/prescriptions` | 查询处方列表 |
+| POST | `/api/prescriptions` | 新增处方 |
+| PUT | `/api/prescriptions/{id}` | 编辑处方头信息 |
+| DELETE | `/api/prescriptions/{id}` | 作废处方 |
+| GET | `/api/prescriptions/{id}/items` | 查询处方明细 |
+
+**查询参数：**
+
+| 参数 | 类型 | 必填 | 说明 |
+|------|------|------|------|
+| `patientId` | Long | 否 | 按病人筛选 |
+| `doctorId` | Long | 否 | 按医生筛选 |
+
+**创建请求体：**
+
+```json
+{
+  "visitId": 1,
+  "doctorId": 1,
+  "patientId": 1,
+  "consultationFee": 30.0,
+  "items": [
+    {
+      "medicineId": 1,
+      "quantity": 2,
+      "usageInstruction": "每日3次，每次1粒"
+    }
+  ]
+}
+```
+
+**Prescription 实体：**
+
+```json
+{
+  "id": 1,
+  "visitId": 1,
+  "doctorId": 1,
+  "patientId": 1,
+  "consultationFee": 30.0,
+  "medicineAmount": 25.0,
+  "totalAmount": 55.0,
+  "status": "UNPAID",
+  "createdAt": "2026-05-16T10:30:00"
+}
+```
+
+**PrescriptionItem 实体：**
+
+```json
+{
+  "id": 1,
+  "prescriptionId": 1,
+  "medicineId": 1,
+  "medicineName": "阿莫西林",
+  "unitPrice": 12.5,
+  "quantity": 2,
+  "usageInstruction": "每日3次，每次1粒",
+  "amount": 25.0
+}
+```
+
+当前已实现行为：
+
+- 支持空 `items`，即纯诊疗处方
+- 创建时按当前药品单价生成明细快照
+- 创建时直接扣减药品库存
+- 库存不足时抛出异常
+
+当前未实现行为：
+
+- 自动生成账单 / 账单明细
+- 支付后把处方改为 `PAID`
+- 处方不可编辑的业务约束
+- 已接诊未开方记录的专门查询接口
 
 ---
 
-## 4. 接口汇总
+## 5. 当前未实现的规划模块
 
-| 模块 | 方法 | 路径 | 权限 |
-|------|------|------|------|
-| Auth | POST | `/api/auth/login` | 无 |
-| Auth | GET | `/api/auth/me` | 已登录 |
-| Auth | GET | `/api/auth/menus` | 已登录 |
-| Auth | POST | `/api/auth/logout` | 已登录 |
-| 科室 | GET | `/api/departments` | `admin:*` |
-| 科室 | POST | `/api/departments` | `admin:*` |
-| 科室 | PUT | `/api/departments/{id}` | `admin:*` |
-| 科室 | DELETE | `/api/departments/{id}` | `admin:*` |
-| 医生 | GET | `/api/doctors` | `admin:*` |
-| 医生 | POST | `/api/doctors` | `admin:*` |
-| 医生 | PUT | `/api/doctors/{id}` | `admin:*` |
-| 医生 | DELETE | `/api/doctors/{id}` | `admin:*` |
-| 病人 | GET | `/api/patients` | `admin:*` |
-| 病人 | POST | `/api/patients` | `admin:*` |
-| 病人 | PUT | `/api/patients/{id}` | `admin:*` |
-| 病人 | DELETE | `/api/patients/{id}` | `admin:*` |
-| 药品 | GET | `/api/medicines` | `admin:*` |
-| 药品 | POST | `/api/medicines` | `admin:*` |
-| 药品 | PUT | `/api/medicines/{id}` | `admin:*` |
-| 药品 | DELETE | `/api/medicines/{id}` | `admin:*` |
-| 病房 | GET | `/api/wards` | `admin:*` |
-| 病房 | POST | `/api/wards` | `admin:*` |
-| 病房 | PUT | `/api/wards/{id}` | `admin:*` |
-| 病房 | DELETE | `/api/wards/{id}` | `admin:*` |
-| 病床 | GET | `/api/beds` | `admin:*` |
-| 病床 | POST | `/api/beds` | `admin:*` |
-| 病床 | PUT | `/api/beds/{id}` | `admin:*` |
-| 病床 | DELETE | `/api/beds/{id}` | `admin:*` |
+以下模块仍在总体设计或 PRD 中，但当前仓库未发现对应 Controller / Service / 静态页面：
+
+- 住院档案
+- 住院记录
+- 预缴管理
+- 账单管理
+- 支付流水
+- 统计分析
+
+如需补充这些接口文档，应在代码落地后再写入“已实现 API”部分，避免把规划误写成现状。
+
+---
+
+## 6. 接口汇总
+
+| 模块 | 方法 | 路径 |
+|------|------|------|
+| Auth | POST | `/api/auth/login` |
+| Auth | GET | `/api/auth/me` |
+| Auth | GET | `/api/auth/menus` |
+| Auth | POST | `/api/auth/logout` |
+| 科室 | GET | `/api/departments` |
+| 科室 | POST | `/api/departments` |
+| 科室 | PUT | `/api/departments/{id}` |
+| 科室 | DELETE | `/api/departments/{id}` |
+| 医生 | GET | `/api/doctors` |
+| 医生 | POST | `/api/doctors` |
+| 医生 | PUT | `/api/doctors/{id}` |
+| 医生 | DELETE | `/api/doctors/{id}` |
+| 病人 | GET | `/api/patients` |
+| 病人 | POST | `/api/patients` |
+| 病人 | PUT | `/api/patients/{id}` |
+| 病人 | DELETE | `/api/patients/{id}` |
+| 药品 | GET | `/api/medicines` |
+| 药品 | POST | `/api/medicines` |
+| 药品 | PUT | `/api/medicines/{id}` |
+| 药品 | DELETE | `/api/medicines/{id}` |
+| 病房 | GET | `/api/wards` |
+| 病房 | POST | `/api/wards` |
+| 病房 | PUT | `/api/wards/{id}` |
+| 病房 | DELETE | `/api/wards/{id}` |
+| 病床 | GET | `/api/beds` |
+| 病床 | POST | `/api/beds` |
+| 病床 | PUT | `/api/beds/{id}` |
+| 病床 | DELETE | `/api/beds/{id}` |
+| 医生职称 | GET | `/api/doctor-titles` |
+| 医生职称 | POST | `/api/doctor-titles` |
+| 医生职称 | PUT | `/api/doctor-titles/{id}` |
+| 医生职称 | DELETE | `/api/doctor-titles/{id}` |
+| 排班 | GET | `/api/schedules` |
+| 排班 | POST | `/api/schedules` |
+| 排班 | PUT | `/api/schedules/{id}` |
+| 排班 | DELETE | `/api/schedules/{id}` |
+| 挂号 | GET | `/api/registrations` |
+| 挂号 | POST | `/api/registrations` |
+| 挂号 | PUT | `/api/registrations/{id}` |
+| 挂号 | DELETE | `/api/registrations/{id}` |
+| 接诊 | GET | `/api/visits` |
+| 接诊 | POST | `/api/visits` |
+| 接诊 | PUT | `/api/visits/{id}` |
+| 处方 | GET | `/api/prescriptions` |
+| 处方 | POST | `/api/prescriptions` |
+| 处方 | PUT | `/api/prescriptions/{id}` |
+| 处方 | DELETE | `/api/prescriptions/{id}` |
+| 处方明细 | GET | `/api/prescriptions/{id}/items` |
