@@ -1,0 +1,37 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+    PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+    "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="cn.edu.scnu.hospitalmanagementinformationsystem.mapper.PrepaidRecordMapper">
+    <resultMap id="PrepaidRecordResultMap" type="cn.edu.scnu.hospitalmanagementinformationsystem.entity.PrepaidRecord">
+        <constructor>
+            <idArg column="id" javaType="java.lang.Long" />
+            <arg column="record_no" javaType="java.lang.String" />
+            <arg column="admission_id" javaType="java.lang.Long" />
+            <arg column="patient_id" javaType="java.lang.Long" />
+            <arg column="amount" javaType="java.math.BigDecimal" />
+            <arg column="type" javaType="java.lang.String" />
+            <arg column="balance_after" javaType="java.math.BigDecimal" />
+            <arg column="remark" javaType="java.lang.String" />
+            <arg column="created_at" javaType="java.time.LocalDateTime" />
+        </constructor>
+    </resultMap>
+
+    <select id="findByAdmissionId" resultMap="PrepaidRecordResultMap">
+        SELECT id, record_no, admission_id, patient_id, amount, type, balance_after, remark, created_at
+        FROM prepaid_records
+        WHERE admission_id = #{admissionId}
+        ORDER BY created_at DESC, id DESC
+    </select>
+
+    <select id="findById" resultMap="PrepaidRecordResultMap">
+        SELECT id, record_no, admission_id, patient_id, amount, type, balance_after, remark, created_at
+        FROM prepaid_records
+        WHERE id = #{id}
+    </select>
+
+    <insert id="insert">
+        INSERT INTO prepaid_records (record_no, admission_id, patient_id, amount, type, balance_after, remark, created_at)
+        VALUES (#{recordNo}, #{admissionId}, #{patientId}, #{amount}, #{type}, #{balanceAfter}, #{remark}, NOW())
+    </insert>
+</mapper>

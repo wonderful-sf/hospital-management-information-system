@@ -1,0 +1,49 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+    PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+    "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="cn.edu.scnu.hospitalmanagementinformationsystem.mapper.InpatientRecordMapper">
+    <resultMap id="InpatientRecordResultMap" type="cn.edu.scnu.hospitalmanagementinformationsystem.entity.InpatientRecord">
+        <constructor>
+            <idArg column="id" javaType="java.lang.Long" />
+            <arg column="admission_id" javaType="java.lang.Long" />
+            <arg column="record_date" javaType="java.time.LocalDate" />
+            <arg column="condition_description" javaType="java.lang.String" />
+            <arg column="treatment_summary" javaType="java.lang.String" />
+            <arg column="treatment_fee" javaType="java.math.BigDecimal" />
+            <arg column="created_at" javaType="java.time.LocalDateTime" />
+        </constructor>
+    </resultMap>
+
+    <select id="findByAdmissionId" resultMap="InpatientRecordResultMap">
+        SELECT id, admission_id, record_date, condition_description, treatment_summary, treatment_fee, created_at
+        FROM inpatient_records
+        WHERE admission_id = #{admissionId}
+        ORDER BY record_date DESC, id DESC
+    </select>
+
+    <select id="findById" resultMap="InpatientRecordResultMap">
+        SELECT id, admission_id, record_date, condition_description, treatment_summary, treatment_fee, created_at
+        FROM inpatient_records
+        WHERE id = #{id}
+    </select>
+
+    <select id="findByAdmissionIdAndDate" resultMap="InpatientRecordResultMap">
+        SELECT id, admission_id, record_date, condition_description, treatment_summary, treatment_fee, created_at
+        FROM inpatient_records
+        WHERE admission_id = #{admissionId} AND record_date = #{recordDate}
+    </select>
+
+    <insert id="insert">
+        INSERT INTO inpatient_records (admission_id, record_date, condition_description, treatment_summary, treatment_fee, created_at)
+        VALUES (#{admissionId}, #{recordDate}, #{conditionDescription}, #{treatmentSummary}, #{treatmentFee}, NOW())
+    </insert>
+
+    <update id="update">
+        UPDATE inpatient_records
+        SET condition_description = #{conditionDescription},
+            treatment_summary = #{treatmentSummary},
+            treatment_fee = #{treatmentFee}
+        WHERE id = #{id}
+    </update>
+</mapper>

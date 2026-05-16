@@ -1,0 +1,93 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+    PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+    "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="cn.edu.scnu.hospitalmanagementinformationsystem.mapper.AdmissionMapper">
+    <resultMap id="AdmissionResultMap" type="cn.edu.scnu.hospitalmanagementinformationsystem.entity.Admission">
+        <constructor>
+            <idArg column="id" javaType="java.lang.Long" />
+            <arg column="admission_no" javaType="java.lang.String" />
+            <arg column="patient_id" javaType="java.lang.Long" />
+            <arg column="department_id" javaType="java.lang.Long" />
+            <arg column="attending_doctor_id" javaType="java.lang.Long" />
+            <arg column="bed_id" javaType="java.lang.Long" />
+            <arg column="admitted_at" javaType="java.time.LocalDateTime" />
+            <arg column="discharged_at" javaType="java.time.LocalDateTime" />
+            <arg column="discharge_type" javaType="java.lang.String" />
+            <arg column="prepaid_balance" javaType="java.math.BigDecimal" />
+            <arg column="status" javaType="java.lang.String" />
+        </constructor>
+    </resultMap>
+
+    <select id="findAll" resultMap="AdmissionResultMap">
+        SELECT id, admission_no, patient_id, department_id, attending_doctor_id, bed_id,
+               admitted_at, discharged_at, discharge_type, prepaid_balance, status
+        FROM admissions
+        <where>
+            <if test="patientId != null">AND patient_id = #{patientId}</if>
+            <if test="doctorId != null">AND attending_doctor_id = #{doctorId}</if>
+        </where>
+        ORDER BY admitted_at DESC, id DESC
+    </select>
+
+    <select id="findAllWithNames" resultType="cn.edu.scnu.hospitalmanagementinformationsystem.dto.AdmissionDto">
+        SELECT a.id, a.admission_no AS admissionNo, a.patient_id AS patientId,
+               a.department_id AS departmentId, a.attending_doctor_id AS attendingDoctorId,
+               a.bed_id AS bedId, a.admitted_at AS admittedAt, a.discharged_at AS dischargedAt,
+               a.discharge_type AS dischargeType, a.prepaid_balance AS prepaidBalance, a.status,
+               p.name AS patientName, d.name AS departmentName,
+               doc.name AS doctorName, b.bed_no AS bedNo
+        FROM admissions a
+        LEFT JOIN patients p ON a.patient_id = p.id
+        LEFT JOIN departments d ON a.department_id = d.id
+        LEFT JOIN doctors doc ON a.attending_doctor_id = doc.id
+        LEFT JOIN beds b ON a.bed_id = b.id
+        <where>
+            <if test="patientId != null">AND a.patient_id = #{patientId}</if>
+            <if test="doctorId != null">AND a.attending_doctor_id = #{doctorId}</if>
+        </where>
+        ORDER BY a.admitted_at DESC, a.id DESC
+    </select>
+
+    <select id="findById" resultMap="AdmissionResultMap">
+        SELECT id, admission_no, patient_id, department_id, attending_doctor_id, bed_id,
+               admitted_at, discharged_at, discharge_type, prepaid_balance, status
+        FROM admissions
+        WHERE id = #{id}
+    </select>
+
+    <insert id="insert">
+        INSERT INTO admissions (admission_no, patient_id, department_id, attending_doctor_id, bed_id,
+                                admitted_at, prepaid_balance, status)
+        VALUES (#{admissionNo}, #{patientId}, #{departmentId}, #{attendingDoctorId}, #{bedId},
+                NOW(), #{prepaidBalance}, #{status})
+    </insert>
+
+    <update id="update">
+        UPDATE admissions
+        SET patient_id = #{patientId},
+            department_id = #{departmentId},
+            attending_doctor_id = #{attendingDoctorId},
+            bed_id = #{bedId},
+            prepaid_balance = #{prepaidBalance},
+            status = #{status}
+        WHERE id = #{id}
+    </update>
+
+    <update id="updateStatus">
+        UPDATE admissions SET status = #{status} WHERE id = #{id}
+    </update>
+
+    <update id="updatePrepaidBalance">
+        UPDATE admissions SET prepaid_balance = #{balance} WHERE id = #{id}
+    </update>
+
+    <update id="discharge">
+        UPDATE admissions
+        SET discharged_at = #{dischargedAt},
+            discharge_type = #{dischargeType},
+            prepaid_balance = #{prepaidBalance},
+            status = 'DISCHARGED'
+        WHERE id = #{id}
+    </update>
+</mapper>
