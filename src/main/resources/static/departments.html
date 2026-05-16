@@ -85,7 +85,7 @@ function loadData() {
             var d = data[i];
             rows += '<tr><td>' + d.id + '</td><td>' + esc(d.name) + '</td><td>' + esc(d.location||'') + '</td><td><button onclick="editDept(' + d.id + ')">编辑</button><button class="danger" onclick="delDept(' + d.id + ')">删除</button></td></tr>';
         }
-        document.getElementById('tableBody').innerHTML = rows;
+        document.getElementById('tableBody').innerHTML = rows || '<tr><td colspan="4">暂无数据</td></tr>';
         document.getElementById('pagination').textContent = '共 ' + data.length + ' 条';
     });
 }
@@ -93,6 +93,7 @@ function loadData() {
 function esc(text) { var d = document.createElement('div'); d.textContent = text || ''; return d.innerHTML; }
 
 function openModal(title, data) {
+    clearPageMessage();
     document.getElementById('modalTitle').textContent = title;
     document.getElementById('editId').value = data ? data.id : '';
     document.getElementById('formName').value = data ? data.name : '';
@@ -113,7 +114,10 @@ window.editDept = function(id) {
 window.delDept = function(id) {
     if (!confirm('确认删除该科室？')) return;
     requestJson(API + '/' + id, { method: 'DELETE' }).then(function(result) {
-        if (result) loadData();
+        if (result) {
+            setPageSuccess('科室删除成功。');
+            loadData();
+        }
     });
 };
 
@@ -129,9 +133,15 @@ document.getElementById('modalForm').addEventListener('submit', function(e) {
     var url = id ? API + '/' + id : API;
     var options = { method: id ? 'PUT' : 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) };
     requestJson(url, options).then(function(result) {
-        if (result) { document.getElementById('modal').classList.remove('open'); loadData(); }
+        if (result) {
+            document.getElementById('modal').classList.remove('open');
+            document.getElementById('modalForm').reset();
+            setPageSuccess(id ? '科室更新成功。' : '科室新增成功。');
+            loadData();
+        }
     });
 });
+loadData();
 })();
 </script>
 </body>

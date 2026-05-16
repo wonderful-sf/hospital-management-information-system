@@ -14,21 +14,24 @@ public class AuthService {
     public static final String LOGIN_USER = "LOGIN_USER";
 
     private static final List<MenuItem> ALL_MENUS = List.of(
-        new MenuItem("首页工作台", "/index.html", ""),
-        new MenuItem("科室管理", "/departments.html", "admin:*"),
-        new MenuItem("医生管理", "/doctors.html", "admin:*"),
-        new MenuItem("病人管理", "/patients.html", "admin:*"),
-        new MenuItem("药品管理", "/medicines.html", "admin:*"),
-        new MenuItem("病房管理", "/wards.html", "admin:*"),
-        new MenuItem("病床管理", "/beds.html", "admin:*"),
-        new MenuItem("排班日历", "/schedules.html", "doctor:schedule:view"),
-        new MenuItem("挂号管理", "/registrations.html", "patient:registration:manage"),
-        new MenuItem("接诊管理", "/visits.html", "doctor:visit:manage"),
-        new MenuItem("处方管理", "/prescriptions.html", "doctor:prescription:manage"),
-        new MenuItem("我的住院档案", "/admissions.html", "patient:admission:view"),
-        new MenuItem("预缴管理", "/prepaid.html", "patient:prepaid:manage"),
-        new MenuItem("账单管理", "/bills.html", "patient:bill:view"),
-        new MenuItem("统计分析", "/statistics.html", "doctor:statistics:view")
+        new MenuItem("管理员首页", "/admin", "admin:*"),
+        new MenuItem("医生首页", "/doctor", "doctor:schedule:view"),
+        new MenuItem("病人首页", "/patient", "patient:registration:manage"),
+        new MenuItem("科室管理", "/departments", "admin:*"),
+        new MenuItem("医生管理", "/doctors", "admin:*"),
+        new MenuItem("病人管理", "/patients", "admin:*"),
+        new MenuItem("药品管理", "/medicines", "admin:*"),
+        new MenuItem("病房管理", "/wards", "admin:*"),
+        new MenuItem("病床管理", "/beds", "admin:*"),
+        new MenuItem("排班日历", "/schedules", "doctor:schedule:view"),
+        new MenuItem("挂号管理", "/registrations", "patient:registration:manage"),
+        new MenuItem("接诊管理", "/visits", "doctor:visit:manage"),
+        new MenuItem("处方管理", "/prescriptions", "doctor:prescription:manage"),
+        new MenuItem("住院记录", "/inpatient-records", "doctor:inpatient:manage"),
+        new MenuItem("我的住院档案", "/admissions", "patient:admission:view"),
+        new MenuItem("预缴管理", "/prepaid", "patient:prepaid:manage"),
+        new MenuItem("账单管理", "/bills", "patient:bill:view"),
+        new MenuItem("统计分析", "/statistics", "admin:*")
     );
 
     private final UserMapper userMapper;

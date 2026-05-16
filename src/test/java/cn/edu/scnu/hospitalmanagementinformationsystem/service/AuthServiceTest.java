@@ -47,7 +47,7 @@ class AuthServiceTest {
         List<MenuItem> menus = service.menusFor(user);
 
         assertThat(menus).extracting(MenuItem::title)
-            .contains("首页工作台", "科室管理", "医生管理", "病人管理", "药品管理", "病房管理", "病床管理");
+            .contains("管理员首页", "科室管理", "医生管理", "病人管理", "药品管理", "病房管理", "病床管理", "统计分析");
     }
 
     @Test
@@ -59,7 +59,7 @@ class AuthServiceTest {
         List<MenuItem> menus = service.menusFor(user);
 
         assertThat(menus).extracting(MenuItem::title)
-            .contains("首页工作台", "挂号管理", "我的住院档案", "预缴管理", "账单管理");
+            .contains("病人首页", "挂号管理", "我的住院档案", "预缴管理", "账单管理");
         assertThat(menus).extracting(MenuItem::title)
             .doesNotContain("科室管理", "医生管理", "药品管理");
     }

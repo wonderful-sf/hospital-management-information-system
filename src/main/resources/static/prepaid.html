@@ -1,0 +1,17 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1.0"><title>预缴管理</title><link rel="stylesheet" href="/css/app.css"><style>.bc{text-align:center;padding:32px;border-radius:16px;background:var(--color-panel);box-shadow:0 4px 16px rgba(28,67,88,0.06);margin-bottom:24px}.bc .amt{font-size:42px;font-weight:700;margin:8px 0}.bc .amt.neg{color:#dc2626}.tb{display:flex;gap:12px;align-items:center;justify-content:center;margin-top:16px}.tb input{width:160px;padding:10px;border:1px solid var(--color-border);border-radius:10px}.tb button{padding:10px 24px;border:0;border-radius:10px;background:var(--color-primary);color:#fff;cursor:pointer}.tag{display:inline-block;padding:2px 10px;border-radius:10px;font-size:12px;font-weight:700}.td{background:#dcfce7;color:#166534}.tx{background:#fee2e2;color:#991b1b}.tr{background:#dbeafe;color:#1e40af}</style></head>
+<body class="admin-page"><div class="admin-shell">
+<header class="topbar"><div><strong>医院信息管理系统</strong><span>HMIS</span></div><div class="user-area"><span id="currentUser"></span><button id="logoutButton">退出</button></div></header>
+<aside class="sidebar"><div class="sidebar-title">功能菜单</div><nav id="menuList" class="menu-list"></nav></aside>
+<main class="content-panel"><div class="page-heading"><p>Inpatient</p><h1>预缴管理</h1><span>查看余额、充值、消费流水</span></div>
+<div class="bc"><div class="label">当前预缴余额（元）</div><div class="amt" id="bal">0.00</div><div class="tb"><input type="number" id="ta" min="100" value="500"><button id="tbtn">充值</button></div><p id="warn" style="color:#dc2626;margin-top:12px;display:none">预缴余额不足，请及时充值以继续治疗。</p></div>
+<h3>收支流水</h3><table><thead><tr><th>流水号</th><th>类型</th><th>金额(元)</th><th>余额后(元)</th><th>时间</th><th>备注</th></tr></thead><tbody id="tbdy"></tbody></table></main>
+<footer class="footer">医院信息管理系统 &copy; 2026</footer></div>
+<script src="/js/app.js"></script><script>
+(function(){var A='/api/admissions';function x(t){var d=document.createElement('div');d.textContent=t||'';return d.innerHTML}function tn(t){var m={DEPOSIT:'td',DEDUCTION:'tx',REFUND:'tr'},n={DEPOSIT:'充值',DEDUCTION:'扣费',REFUND:'退款'};return'<span class="tag '+m[t]+'">'+n[t]+'</span>';}
+var aid=null;
+function ld(){requestJson(A).then(function(r){if(!r)return;var d=r.data||[];if(!d.length)return;aid=d[0].id;var b=d[0].prepaidBalance||0;var el=document.getElementById('bal');el.textContent=Number(b).toFixed(2);el.className='amt'+(b<0?' neg':'');document.getElementById('warn').style.display=b<0?'block':'none';ldr();});}
+function ldr(){if(!aid)return;requestJson(A+'/'+aid+'/prepaid-records').then(function(r){if(!r)return;var d=r.data||[],rows='';d.forEach(function(v){rows+='<tr><td>'+x(v.recordNo)+'</td><td>'+tn(v.type)+'</td><td>'+Number(v.amount).toFixed(2)+'</td><td>'+Number(v.balanceAfter).toFixed(2)+'</td><td>'+x(v.createdAt)+'</td><td>'+x(v.remark||'')+'</td></tr>';});document.getElementById('tbdy').innerHTML=rows||'<tr><td colspan="6">暂无记录</td></tr>';});}
+document.getElementById('tbtn').addEventListener('click',function(){if(!aid){setPageError('未找到住院档案');return;}var am=parseFloat(document.getElementById('ta').value);if(!am||am<=0){setPageError('金额必须>0');return;}requestJson(A+'/'+aid+'/prepaid',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({amount:am})}).then(function(r){if(r){setPageSuccess('充值成功。');document.getElementById('ta').value='500';ld();}});});
+ld();})();</script></body></html>

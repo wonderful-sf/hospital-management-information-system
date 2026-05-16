@@ -1,0 +1,34 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+    PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+    "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="cn.edu.scnu.hospitalmanagementinformationsystem.mapper.PrescriptionItemMapper">
+    <resultMap id="PrescriptionItemResultMap" type="cn.edu.scnu.hospitalmanagementinformationsystem.entity.PrescriptionItem">
+        <constructor>
+            <idArg column="id" javaType="java.lang.Long" />
+            <arg column="prescription_id" javaType="java.lang.Long" />
+            <arg column="medicine_id" javaType="java.lang.Long" />
+            <arg column="medicine_name" javaType="java.lang.String" />
+            <arg column="unit_price" javaType="java.math.BigDecimal" />
+            <arg column="quantity" javaType="java.lang.Integer" />
+            <arg column="usage_instruction" javaType="java.lang.String" />
+            <arg column="amount" javaType="java.math.BigDecimal" />
+        </constructor>
+    </resultMap>
+
+    <select id="findByPrescriptionId" resultMap="PrescriptionItemResultMap">
+        SELECT id, prescription_id, medicine_id, medicine_name, unit_price, quantity, usage_instruction, amount
+        FROM prescription_items
+        WHERE prescription_id = #{prescriptionId}
+        ORDER BY id
+    </select>
+
+    <delete id="deleteByPrescriptionId">
+        DELETE FROM prescription_items WHERE prescription_id = #{prescriptionId}
+    </delete>
+
+    <insert id="insert" useGeneratedKeys="true" keyProperty="id">
+        INSERT INTO prescription_items (prescription_id, medicine_id, medicine_name, unit_price, quantity, usage_instruction, amount)
+        VALUES (#{prescriptionId}, #{medicineId}, #{medicineName}, #{unitPrice}, #{quantity}, #{usageInstruction}, #{amount})
+    </insert>
+</mapper>

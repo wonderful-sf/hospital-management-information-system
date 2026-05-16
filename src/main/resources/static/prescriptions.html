@@ -1,0 +1,252 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>处方管理 - 医院信息管理系统</title>
+    <link rel="stylesheet" href="/css/app.css">
+    <style>
+        .toolbar { display: flex; gap: 12px; margin-bottom: 18px; align-items: center; }
+        .toolbar input, .toolbar select { padding: 10px 14px; border: 1px solid var(--color-border); border-radius: 12px; outline: none; }
+        .toolbar input:focus, .toolbar select:focus { border-color: var(--color-primary); }
+        .toolbar button { padding: 10px 20px; border: 0; border-radius: 12px; color: #fff; background: var(--color-primary); cursor: pointer; }
+        .toolbar button:hover { background: var(--color-primary-dark); }
+        table { width: 100%; border-collapse: collapse; background: var(--color-panel); border-radius: 14px; overflow: hidden; box-shadow: 0 8px 24px rgba(28,67,88,0.06); }
+        th, td { padding: 12px 16px; text-align: left; border-bottom: 1px solid var(--color-border); }
+        th { background: #f0f6fa; font-weight: 700; font-size: 13px; color: var(--color-muted); }
+        td button { padding: 6px 12px; margin-right: 6px; border: 1px solid var(--color-border); border-radius: 8px; background: #fff; cursor: pointer; }
+        td button:hover { background: #f0f6fa; }
+        td button.danger { color: #b42318; border-color: #fecaca; }
+        td button.danger:hover { background: #fef2f2; }
+        .modal-overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.35); place-items: center; z-index: 100; overflow-y: auto; }
+        .modal-overlay.open { display: grid; }
+        .modal-card { width: min(640px, 92vw); padding: 28px; border-radius: 20px; background: #fff; box-shadow: var(--shadow-card); max-height: 90vh; overflow-y: auto; }
+        .modal-card h2 { margin: 0 0 20px; }
+        .modal-card label { display: grid; gap: 6px; margin-bottom: 14px; font-weight: 700; }
+        .modal-card input, .modal-card select, .modal-card textarea { padding: 10px 12px; border: 1px solid var(--color-border); border-radius: 10px; outline: none; }
+        .modal-card input:focus, .modal-card select:focus, .modal-card textarea:focus { border-color: var(--color-primary); }
+        .modal-actions { display: flex; gap: 10px; justify-content: flex-end; margin-top: 8px; }
+        .modal-actions button { padding: 10px 20px; border: 0; border-radius: 12px; cursor: pointer; }
+        .modal-actions .btn-save { color: #fff; background: var(--color-primary); }
+        .modal-actions .btn-save:hover { background: var(--color-primary-dark); }
+        .modal-actions .btn-cancel { background: #f0f0f0; }
+        .item-row { display: flex; gap: 8px; align-items: end; margin-bottom: 8px; padding: 8px; background: #f8fafb; border-radius: 10px; }
+        .item-row label { flex: 1; margin-bottom: 0; font-weight: 600; font-size: 13px; }
+        .item-row select, .item-row input { width: 100%; }
+        .item-row button.remove-item { padding: 8px 12px; border: 1px solid #fecaca; border-radius: 8px; background: #fff; color: #b42318; cursor: pointer; align-self: flex-end; }
+        .add-item-btn { margin-bottom: 14px; padding: 8px 16px; border: 1px dashed var(--color-primary); border-radius: 10px; background: transparent; color: var(--color-primary); cursor: pointer; }
+        .items-table { width: 100%; border-collapse: collapse; margin-top: 12px; }
+        .items-table th, .items-table td { padding: 8px 12px; text-align: left; border-bottom: 1px solid var(--color-border); font-size: 13px; }
+        .items-table th { background: #f0f6fa; }
+        .pagination { margin-top: 14px; color: var(--color-muted); font-size: 13px; }
+    </style>
+</head>
+<body class="admin-page">
+<div class="admin-shell">
+    <header class="topbar">
+        <div><strong>医院信息管理系统</strong><span>Hospital Management Information System</span></div>
+        <div class="user-area"><span id="currentUser">未登录</span><button id="logoutButton" type="button">退出</button></div>
+    </header>
+    <aside class="sidebar">
+        <div class="sidebar-title">功能菜单</div>
+        <nav id="menuList" class="menu-list"></nav>
+    </aside>
+    <main class="content-panel">
+        <div class="page-heading"><p>Outpatient</p><h1>处方管理</h1><span>管理门诊处方</span></div>
+        <div class="toolbar" style="margin-top:24px">
+            <input id="filterPatientId" placeholder="病人ID..." style="width:120px" />
+            <input id="filterDoctorId" placeholder="医生ID..." style="width:120px" />
+            <button id="searchBtn">筛选</button>
+            <button id="addBtn">新增处方</button>
+        </div>
+        <table><thead><tr><th>ID</th><th>就诊ID</th><th>病人ID</th><th>医生ID</th><th>诊查费</th><th>药品金额</th><th>总金额</th><th>状态</th><th>操作</th></tr></thead><tbody id="tableBody"></tbody></table>
+        <div class="pagination" id="pagination"></div>
+    </main>
+    <footer class="footer">医院信息管理系统 &copy; 2026</footer>
+</div>
+<div class="modal-overlay" id="modal">
+    <div class="modal-card">
+        <h2 id="modalTitle">新增处方</h2>
+        <form id="modalForm">
+            <input type="hidden" id="editId" />
+            <label>就诊ID<input id="formVisitId" type="number" required /></label>
+            <label>病人ID<input id="formPatientId" type="number" required /></label>
+            <label>医生ID<input id="formDoctorId" type="number" required /></label>
+            <label>诊查费<input id="formConsultationFee" type="number" step="0.01" value="0.00" /></label>
+            <div style="margin-bottom:8px;font-weight:700">药品明细</div>
+            <div id="itemsContainer"></div>
+            <button type="button" class="add-item-btn" id="addItemBtn">+ 添加药品</button>
+            <div class="modal-actions">
+                <button type="button" class="btn-cancel" id="cancelBtn">取消</button>
+                <button type="submit" class="btn-save">保存</button>
+            </div>
+        </form>
+    </div>
+</div>
+<div class="modal-overlay" id="itemsModal">
+    <div class="modal-card">
+        <h2>处方明细</h2>
+        <table class="items-table"><thead><tr><th>药品名称</th><th>单价</th><th>数量</th><th>用法</th><th>金额</th></tr></thead><tbody id="itemsTableBody"></tbody></table>
+        <div class="modal-actions" style="margin-top:16px">
+            <button type="button" class="btn-cancel" id="itemsCloseBtn">关闭</button>
+        </div>
+    </div>
+</div>
+<script src="/js/app.js"></script>
+<script>
+(function() {
+var API = '/api/prescriptions';
+var medicines = [];
+
+function loadMedicines() {
+    return requestJson('/api/medicines').then(function(result) {
+        medicines = result && result.data ? result.data : [];
+    });
+}
+
+function loadData() {
+    var patientId = document.getElementById('filterPatientId').value.trim();
+    var doctorId = document.getElementById('filterDoctorId').value.trim();
+    var params = [];
+    if (patientId) params.push('patientId=' + encodeURIComponent(patientId));
+    if (doctorId) params.push('doctorId=' + encodeURIComponent(doctorId));
+    var url = API + (params.length ? '?' + params.join('&') : '');
+    requestJson(url).then(function(result) {
+        if (!result) return;
+        var data = result.data || [];
+        var rows = '';
+        for (var i = 0; i < data.length; i++) {
+            var d = data[i];
+            var statusText = d.status === 'UNPAID' ? '未支付' : (d.status === 'PAID' ? '已支付' : '已作废');
+            rows += '<tr><td>' + d.id + '</td><td>' + (d.visitId||'') + '</td><td>' + d.patientId + '</td><td>' + d.doctorId + '</td><td>' + (d.consultationFee != null ? d.consultationFee.toFixed(2) : '0.00') + '</td><td>' + (d.medicineAmount != null ? d.medicineAmount.toFixed(2) : '0.00') + '</td><td>' + (d.totalAmount != null ? d.totalAmount.toFixed(2) : '0.00') + '</td><td>' + statusText + '</td><td><button onclick="viewItems(' + d.id + ')">明细</button><button onclick="editPrescription(' + d.id + ')">编辑</button><button class="danger" onclick="cancelPrescription(' + d.id + ')">作废</button></td></tr>';
+        }
+        document.getElementById('tableBody').innerHTML = rows || '<tr><td colspan="9">暂无数据</td></tr>';
+        document.getElementById('pagination').textContent = '共 ' + data.length + ' 条';
+    });
+}
+
+function esc(text) { var d = document.createElement('div'); d.textContent = text || ''; return d.innerHTML; }
+
+function buildItemRow(item) {
+    var options = '<option value="">请选择药品</option>';
+    for (var i = 0; i < medicines.length; i++) {
+        var sel = item && item.medicineId === medicines[i].id ? ' selected' : '';
+        options += '<option value="' + medicines[i].id + '"' + sel + '>' + esc(medicines[i].name) + ' (' + (medicines[i].unitPrice != null ? medicines[i].unitPrice.toFixed(2) : '0.00') + '元)</option>';
+    }
+    return '<div class="item-row"><label>药品<select class="item-medicine" required>' + options + '</select></label><label>数量<input class="item-quantity" type="number" min="1" value="' + (item ? item.quantity || 1 : 1) + '" required style="width:80px" /></label><label>用法<input class="item-usage" value="' + esc(item ? item.usageInstruction || '' : '') + '" style="width:120px" /></label><button type="button" class="remove-item" onclick="this.closest(\'.item-row\').remove()">删除</button></div>';
+}
+
+function openModal(title, data, items) {
+    clearPageMessage();
+    document.getElementById('modalTitle').textContent = title;
+    document.getElementById('editId').value = data ? data.id : '';
+    document.getElementById('formVisitId').value = data ? data.visitId || '' : '';
+    document.getElementById('formPatientId').value = data ? data.patientId : '';
+    document.getElementById('formDoctorId').value = data ? data.doctorId : '';
+    document.getElementById('formConsultationFee').value = data ? (data.consultationFee != null ? data.consultationFee : '0.00') : '0.00';
+    var container = document.getElementById('itemsContainer');
+    container.innerHTML = '';
+    if (items && items.length > 0) {
+        for (var i = 0; i < items.length; i++) container.insertAdjacentHTML('beforeend', buildItemRow(items[i]));
+    } else {
+        container.insertAdjacentHTML('beforeend', buildItemRow());
+    }
+    document.getElementById('modal').classList.add('open');
+}
+
+window.editPrescription = function(id) {
+    requestJson(API).then(function(result) {
+        if (!result) return;
+        var data = result.data || [];
+        for (var i = 0; i < data.length; i++) {
+            if (data[i].id === id) {
+                requestJson(API + '/' + id + '/items').then(function(ir) {
+                    openModal('编辑处方', data[i], ir ? ir.data : []);
+                });
+                return;
+            }
+        }
+    });
+};
+
+window.cancelPrescription = function(id) {
+    if (!confirm('确认作废该处方？')) return;
+    requestJson(API + '/' + id, { method: 'DELETE' }).then(function(result) {
+        if (result) {
+            setPageSuccess('处方作废成功。');
+            loadData();
+        }
+    });
+};
+
+window.viewItems = function(id) {
+    requestJson(API + '/' + id + '/items').then(function(result) {
+        if (!result) return;
+        var data = result.data || [];
+        var rows = '';
+        for (var i = 0; i < data.length; i++) {
+            var d = data[i];
+            rows += '<tr><td>' + esc(d.medicineName) + '</td><td>' + (d.unitPrice != null ? d.unitPrice.toFixed(2) : '') + '</td><td>' + d.quantity + '</td><td>' + esc(d.usageInstruction||'') + '</td><td>' + (d.amount != null ? d.amount.toFixed(2) : '') + '</td></tr>';
+        }
+        document.getElementById('itemsTableBody').innerHTML = rows || '<tr><td colspan="5">无明细</td></tr>';
+        document.getElementById('itemsModal').classList.add('open');
+    });
+};
+
+document.getElementById('searchBtn').addEventListener('click', loadData);
+document.getElementById('addBtn').addEventListener('click', function() {
+    if (medicines.length === 0) {
+        loadMedicines().then(function() { openModal('新增处方'); });
+    } else {
+        openModal('新增处方');
+    }
+});
+document.getElementById('cancelBtn').addEventListener('click', function() { document.getElementById('modal').classList.remove('open'); });
+document.getElementById('itemsCloseBtn').addEventListener('click', function() { document.getElementById('itemsModal').classList.remove('open'); });
+document.getElementById('addItemBtn').addEventListener('click', function() {
+    document.getElementById('itemsContainer').insertAdjacentHTML('beforeend', buildItemRow());
+});
+
+document.getElementById('modalForm').addEventListener('submit', function(e) {
+    e.preventDefault();
+    var id = document.getElementById('editId').value;
+    var items = [];
+    var rows = document.querySelectorAll('#itemsContainer .item-row');
+    for (var i = 0; i < rows.length; i++) {
+        var sel = rows[i].querySelector('.item-medicine');
+        var qty = rows[i].querySelector('.item-quantity');
+        var usage = rows[i].querySelector('.item-usage');
+        if (sel.value) {
+            items.push({
+                medicineId: parseInt(sel.value),
+                quantity: parseInt(qty.value) || 1,
+                usageInstruction: usage.value
+            });
+        }
+    }
+    var payload = {
+        visitId: parseInt(document.getElementById('formVisitId').value),
+        doctorId: parseInt(document.getElementById('formDoctorId').value),
+        patientId: parseInt(document.getElementById('formPatientId').value),
+        consultationFee: parseFloat(document.getElementById('formConsultationFee').value) || 0,
+        items: items
+    };
+    var url = id ? API + '/' + id : API;
+    var options = { method: id ? 'PUT' : 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) };
+    requestJson(url, options).then(function(result) {
+        if (result) {
+            document.getElementById('modal').classList.remove('open');
+            document.getElementById('modalForm').reset();
+            setPageSuccess(id ? '处方更新成功。' : '处方新增成功。');
+            loadMedicines();
+            loadData();
+        }
+    });
+});
+
+loadMedicines();
+loadData();
+})();
+</script>
+</body>
+</html>

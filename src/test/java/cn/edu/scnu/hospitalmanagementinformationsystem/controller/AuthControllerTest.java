@@ -2,7 +2,9 @@ package cn.edu.scnu.hospitalmanagementinformationsystem.controller;
 
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.forwardedUrl;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.redirectedUrl;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.request;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
@@ -22,7 +24,7 @@ import org.springframework.test.web.servlet.setup.MockMvcBuilders;
 class AuthControllerTest {
 
     private final FakeAuthService authService = new FakeAuthService();
-    private final MockMvc mockMvc = MockMvcBuilders.standaloneSetup(new AuthController(authService)).build();
+    private final MockMvc mockMvc = MockMvcBuilders.standaloneSetup(new AuthController(authService), new IndexController()).build();
 
     @Test
     @DisplayName("POST /api/auth/login stores user in session")
@@ -65,6 +67,33 @@ class AuthControllerTest {
             .andExpect(jsonPath("$.code").value(200));
     }
 
+    @Test
+    @DisplayName("GET /admin forwards for admin user")
+    void admin_adminUser_forwardsAdminHome() throws Exception {
+        var sessionUser = new SessionUser(1L, "admin", "ADMIN", List.of("admin:*"));
+
+        mockMvc.perform(get("/admin").sessionAttr(AuthService.LOGIN_USER, sessionUser))
+            .andExpect(status().isOk())
+            .andExpect(forwardedUrl("/admin.html"));
+    }
+
+    @Test
+    @DisplayName("GET /admin redirects doctor to doctor home")
+    void admin_doctorUser_redirectsDoctorHome() throws Exception {
+        var sessionUser = new SessionUser(2L, "doc_zhang", "DOCTOR", List.of("doctor:schedule:view"));
+
+        mockMvc.perform(get("/admin").sessionAttr(AuthService.LOGIN_USER, sessionUser))
+            .andExpect(status().is3xxRedirection())
+            .andExpect(redirectedUrl("/doctor"));
+    }
+
+    @Test
+    @DisplayName("GET /patient redirects missing session to login")
+    void patient_missingSession_redirectsLogin() throws Exception {
+        mockMvc.perform(get("/patient"))
+            .andExpect(status().is3xxRedirection())
+            .andExpect(redirectedUrl("/login"));
+    }
     private static class FakeAuthService extends AuthService {
         FakeAuthService() {
             super(new EmptyUserMapper());

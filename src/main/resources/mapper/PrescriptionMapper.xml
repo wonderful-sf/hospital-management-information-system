@@ -1,0 +1,66 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+    PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+    "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="cn.edu.scnu.hospitalmanagementinformationsystem.mapper.PrescriptionMapper">
+    <resultMap id="PrescriptionResultMap" type="cn.edu.scnu.hospitalmanagementinformationsystem.entity.Prescription">
+        <constructor>
+            <idArg column="id" javaType="java.lang.Long" />
+            <arg column="visit_id" javaType="java.lang.Long" />
+            <arg column="doctor_id" javaType="java.lang.Long" />
+            <arg column="patient_id" javaType="java.lang.Long" />
+            <arg column="consultation_fee" javaType="java.math.BigDecimal" />
+            <arg column="medicine_amount" javaType="java.math.BigDecimal" />
+            <arg column="total_amount" javaType="java.math.BigDecimal" />
+            <arg column="status" javaType="java.lang.String" />
+            <arg column="created_at" javaType="java.time.LocalDateTime" />
+        </constructor>
+    </resultMap>
+
+    <select id="findAll" resultMap="PrescriptionResultMap">
+        SELECT id, visit_id, doctor_id, patient_id, consultation_fee, medicine_amount, total_amount, status, created_at
+        FROM prescriptions
+        <where>
+            <if test="patientId != null">
+                AND patient_id = #{patientId}
+            </if>
+            <if test="doctorId != null">
+                AND doctor_id = #{doctorId}
+            </if>
+        </where>
+        ORDER BY created_at DESC, id DESC
+    </select>
+
+    <select id="findById" resultMap="PrescriptionResultMap">
+        SELECT id, visit_id, doctor_id, patient_id, consultation_fee, medicine_amount, total_amount, status, created_at
+        FROM prescriptions
+        WHERE id = #{id}
+    </select>
+
+    <select id="findByVisitId" resultMap="PrescriptionResultMap">
+        SELECT id, visit_id, doctor_id, patient_id, consultation_fee, medicine_amount, total_amount, status, created_at
+        FROM prescriptions
+        WHERE visit_id = #{visitId}
+    </select>
+
+    <insert id="insert">
+        INSERT INTO prescriptions (visit_id, doctor_id, patient_id, consultation_fee, medicine_amount, total_amount, status, created_at)
+        VALUES (#{visitId}, #{doctorId}, #{patientId}, #{consultationFee}, #{medicineAmount}, #{totalAmount}, #{status}, #{createdAt})
+    </insert>
+
+    <update id="update">
+        UPDATE prescriptions
+        SET consultation_fee = #{consultationFee},
+            medicine_amount = #{medicineAmount},
+            total_amount = #{totalAmount},
+            status = #{status}
+        WHERE id = #{id}
+    </update>
+
+    <update id="cancelById">
+        UPDATE prescriptions
+        SET status = 'PAID'
+        WHERE id = #{id}
+          AND status = 'UNPAID'
+    </update>
+</mapper>

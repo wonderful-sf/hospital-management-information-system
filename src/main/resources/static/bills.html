@@ -1,0 +1,25 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1.0"><title>账单管理</title><link rel="stylesheet" href="/css/app.css"><style>
+.sc{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:16px;margin-bottom:24px}.cd{padding:20px;border-radius:14px;background:var(--color-panel);box-shadow:0 4px 16px rgba(28,67,88,0.06)}.cd .lb{font-size:12px;color:var(--color-muted)}.cd .vl{font-size:28px;font-weight:700;margin-top:4px}.vl.red{color:#dc2626}.vl.green{color:#16a34a}.tag{display:inline-block;padding:2px 10px;border-radius:10px;font-size:12px;font-weight:700}.tu{background:#fee2e2;color:#991b1b}.tp{background:#dcfce7;color:#166534}.so{background:#dbeafe;color:#1e40af}.si{background:#f3e8ff;color:#6b21a8}.filter-bar{display:flex;gap:12px;margin-bottom:18px;align-items:center;flex-wrap:wrap}.filter-bar select{padding:8px 12px;border:1px solid var(--color-border);border-radius:10px}.filter-bar button{padding:8px 20px;border:0;border-radius:10px;background:var(--color-primary);color:#fff;cursor:pointer}</style></head>
+<body class="admin-page"><div class="admin-shell">
+<header class="topbar"><div><strong>医院信息管理系统</strong><span>HMIS</span></div><div class="user-area"><span id="currentUser"></span><button id="logoutButton">退出</button></div></header>
+<aside class="sidebar"><div class="sidebar-title">功能菜单</div><nav id="menuList" class="menu-list"></nav></aside>
+<main class="content-panel"><div class="page-heading"><p>Billing</p><h1>账单管理</h1><span>查看账单、缴费、支付记录</span></div>
+<div class="sc"><div class="cd"><div class="lb">待缴金额（元）</div><div class="vl red" id="pa">0.00</div></div><div class="cd"><div class="lb">已缴金额（元）</div><div class="vl green" id="da">0.00</div></div><div class="cd"><div class="lb">账单总数</div><div class="vl" id="tc">0</div></div></div>
+<div class="filter-bar"><select id="fs"><option value="">全部状态</option><option value="UNPAID">待缴</option><option value="PAID">已缴</option></select><button id="sb">查询</button></div>
+<table><thead><tr><th>账单号</th><th>来源</th><th>金额(元)</th><th>状态</th><th>时间</th><th>操作</th></tr></thead><tbody id="tb"></tbody></table>
+<h3 style="margin-top:28px">支付记录</h3>
+<table><thead><tr><th>流水号</th><th>账单号</th><th>金额(元)</th><th>方式</th><th>时间</th></tr></thead><tbody id="pb"></tbody></table></main>
+<footer class="footer">医院信息管理系统 &copy; 2026</footer></div>
+<script src="/js/app.js"></script><script>
+(function(){var A='/api/bills';function x(t){var d=document.createElement('div');d.textContent=t||'';return d.innerHTML}
+function st(t){return'<span class="tag '+(t==='UNPAID'?'tu':'tp')+'">'+(t==='UNPAID'?'待缴':'已缴')+'</span>';}
+function ss(t){return'<span class="tag '+(t==='OUTPATIENT'?'so':'si')+'">'+(t==='OUTPATIENT'?'门诊':'住院')+'</span>';}
+function ld(){var st=document.getElementById('fs').value,p=st?'&status='+st:'';requestJson(A+p).then(function(r){if(!r)return;var d=r.data||[],rows='';d.forEach(function(v){rows+='<tr><td>'+x(v.billNo)+'</td><td>'+ss(v.sourceType)+'</td><td>'+Number(v.totalAmount).toFixed(2)+'</td><td>'+st(v.status)+'</td><td>'+x(v.createdAt)+'</td><td>'+(v.status==='UNPAID'?'<button onclick="pay('+v.id+')">缴费</button>':'')+'<button onclick="items('+v.id+')">明细</button></td></tr>';});document.getElementById('tb').innerHTML=rows||'<tr><td colspan="6">暂无账单</td></tr>';ls();lp();});}
+function ls(){requestJson(A+'/stats').then(function(r){if(!r)return;var d=r.data||{};document.getElementById('pa').textContent=Number(d.pendingAmount||0).toFixed(2);document.getElementById('da').textContent=Number(d.paidAmount||0).toFixed(2);document.getElementById('tc').textContent=d.totalCount||0;});}
+function lp(){requestJson(A+'/payments').then(function(r){if(!r)return;var d=r.data||[],rows='';d.forEach(function(v){rows+='<tr><td>'+x(v.paymentNo)+'</td><td>'+x(v.billId)+'</td><td>'+Number(v.amount).toFixed(2)+'</td><td>'+x(v.paymentMethod)+'</td><td>'+x(v.paidAt)+'</td></tr>';});document.getElementById('pb').innerHTML=rows||'<tr><td colspan="5">暂无记录</td></tr>';});}
+window.pay=function(id){if(!confirm('确认支付？'))return;requestJson(A+'/'+id+'/pay',{method:'POST'}).then(function(r){if(r){setPageSuccess('支付成功！');ld();}});};
+window.items=function(id){requestJson(A+'/'+id+'/items').then(function(r){if(!r)return;var d=r.data||[],t='明细:\n';d.forEach(function(v){t+=v.itemType+' '+x(v.itemName)+' ¥'+Number(v.unitPrice).toFixed(2)+'×'+Number(v.quantity).toFixed(0)+'='+Number(v.amount).toFixed(2)+'\n';});alert(t||'无明细');});};
+document.getElementById('sb').addEventListener('click',ld);ld();
+})();</script></body></html>

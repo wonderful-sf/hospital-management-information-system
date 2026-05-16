@@ -1,0 +1,72 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+    PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+    "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="cn.edu.scnu.hospitalmanagementinformationsystem.mapper.DoctorScheduleMapper">
+    <resultMap id="DoctorScheduleResultMap" type="cn.edu.scnu.hospitalmanagementinformationsystem.entity.DoctorSchedule">
+        <constructor>
+            <idArg column="id" javaType="java.lang.Long" />
+            <arg column="doctor_id" javaType="java.lang.Long" />
+            <arg column="department_id" javaType="java.lang.Long" />
+            <arg column="schedule_type" javaType="java.lang.String" />
+            <arg column="start_time" javaType="java.time.LocalDateTime" />
+            <arg column="end_time" javaType="java.time.LocalDateTime" />
+            <arg column="room" javaType="java.lang.String" />
+        </constructor>
+    </resultMap>
+
+    <select id="findAll" resultMap="DoctorScheduleResultMap">
+        SELECT id, doctor_id, department_id, schedule_type, start_time, end_time, room
+        FROM doctor_schedules
+        <where>
+            <if test="doctorId != null">
+                AND doctor_id = #{doctorId}
+            </if>
+            <if test="departmentId != null">
+                AND department_id = #{departmentId}
+            </if>
+        </where>
+        ORDER BY start_time, id
+    </select>
+
+    <select id="findById" resultMap="DoctorScheduleResultMap">
+        SELECT id, doctor_id, department_id, schedule_type, start_time, end_time, room
+        FROM doctor_schedules
+        WHERE id = #{id}
+    </select>
+
+    <insert id="insert">
+        INSERT INTO doctor_schedules (doctor_id, department_id, schedule_type, start_time, end_time, room)
+        VALUES (#{doctorId}, #{departmentId}, #{scheduleType}, #{startTime}, #{endTime}, #{room})
+    </insert>
+
+    <update id="update">
+        UPDATE doctor_schedules
+        SET doctor_id = #{doctorId},
+            department_id = #{departmentId},
+            schedule_type = #{scheduleType},
+            start_time = #{startTime},
+            end_time = #{endTime},
+            room = #{room}
+        WHERE id = #{id}
+    </update>
+
+    <delete id="deleteById">
+        DELETE FROM doctor_schedules WHERE id = #{id}
+    </delete>
+
+    <select id="lastInsertId" resultType="java.lang.Long">
+        SELECT LAST_INSERT_ID()
+    </select>
+
+    <select id="countConflicts" resultType="int">
+        SELECT COUNT(*)
+        FROM doctor_schedules
+        WHERE doctor_id = #{doctorId}
+          AND start_time &lt; #{endTime}
+          AND end_time > #{startTime}
+          <if test="excludeId != null">
+              AND id != #{excludeId}
+          </if>
+    </select>
+</mapper>

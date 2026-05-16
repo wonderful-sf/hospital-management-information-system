@@ -19,7 +19,7 @@ form.addEventListener('submit', async (event) => {
         const result = await readJsonResponse(response);
 
         if (response.ok && result.code === 200) {
-            window.location.href = '/index.html';
+            window.location.href = homePathForRole(result.data?.role);
             return;
         }
 
@@ -28,6 +28,19 @@ form.addEventListener('submit', async (event) => {
         message.textContent = '网络异常，请稍后重试';
     }
 });
+
+function homePathForRole(role) {
+    if (role === 'ADMIN') {
+        return '/admin';
+    }
+    if (role === 'DOCTOR') {
+        return '/doctor';
+    }
+    if (role === 'PATIENT') {
+        return '/patient';
+    }
+    return '/index';
+}
 
 async function readJsonResponse(response) {
     const contentType = response.headers.get('content-type') || '';

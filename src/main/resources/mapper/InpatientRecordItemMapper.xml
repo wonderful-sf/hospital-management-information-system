@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+    PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+    "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="cn.edu.scnu.hospitalmanagementinformationsystem.mapper.InpatientRecordItemMapper">
+    <resultMap id="InpatientRecordItemResultMap" type="cn.edu.scnu.hospitalmanagementinformationsystem.entity.InpatientRecordItem">
+        <constructor>
+            <idArg column="id" javaType="java.lang.Long" />
+            <arg column="inpatient_record_id" javaType="java.lang.Long" />
+            <arg column="item_type" javaType="cn.edu.scnu.hospitalmanagementinformationsystem.entity.InpatientRecordItemType" />
+            <arg column="medicine_id" javaType="java.lang.Long" />
+            <arg column="item_name" javaType="java.lang.String" />
+            <arg column="unit_price" javaType="java.math.BigDecimal" />
+            <arg column="quantity" javaType="java.math.BigDecimal" />
+            <arg column="usage_instruction" javaType="java.lang.String" />
+            <arg column="amount" javaType="java.math.BigDecimal" />
+        </constructor>
+    </resultMap>
+
+    <select id="findByInpatientRecordId" resultMap="InpatientRecordItemResultMap">
+        SELECT id, inpatient_record_id, item_type, medicine_id, item_name, unit_price, quantity, usage_instruction, amount
+        FROM inpatient_record_items
+        WHERE inpatient_record_id = #{inpatientRecordId}
+        ORDER BY id
+    </select>
+
+    <insert id="insert">
+        INSERT INTO inpatient_record_items (inpatient_record_id, item_type, medicine_id, item_name, unit_price, quantity, usage_instruction, amount)
+        VALUES (#{inpatientRecordId}, #{itemType}, #{medicineId}, #{itemName}, #{unitPrice}, #{quantity}, #{usageInstruction}, #{amount})
+    </insert>
+</mapper>

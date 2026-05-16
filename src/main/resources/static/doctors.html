@@ -63,8 +63,8 @@
             <label>工号<input id="formEmployeeNo" required /></label>
             <label>姓名<input id="formName" required /></label>
             <label>性别<select id="formGender"><option value="MALE">男</option><option value="FEMALE">女</option></select></label>
-            <label>科室ID<input id="formDepartmentId" type="number" required /></label>
-            <label>职称ID<input id="formTitleId" type="number" required /></label>
+            <label>科室<select id="formDepartmentId" required><option value="">请选择科室</option></select></label>
+            <label>职称<select id="formTitleId" required><option value="">请选择职称</option></select></label>
             <label>电话<input id="formPhone" /></label>
             <div class="modal-actions">
                 <button type="button" class="btn-cancel" id="cancelBtn">取消</button>
@@ -78,6 +78,8 @@
 (function() {
 var API = '/api/doctors';
 var keyword = '';
+var departments = [];
+var titles = [];
 
 function loadData() {
     var params = keyword ? '?keyword=' + encodeURIComponent(keyword) : '';
@@ -89,21 +91,58 @@ function loadData() {
             var d = data[i];
             rows += '<tr><td>' + d.id + '</td><td>' + esc(d.employeeNo) + '</td><td>' + esc(d.name) + '</td><td>' + (d.gender === 'MALE' ? '男' : '女') + '</td><td>' + d.departmentId + '</td><td>' + d.titleId + '</td><td>' + esc(d.phone||'') + '</td><td><button onclick="editDoctor(' + d.id + ')">编辑</button><button class="danger" onclick="delDoctor(' + d.id + ')">删除</button></td></tr>';
         }
-        document.getElementById('tableBody').innerHTML = rows;
+        document.getElementById('tableBody').innerHTML = rows || '<tr><td colspan="8">暂无数据</td></tr>';
         document.getElementById('pagination').textContent = '共 ' + data.length + ' 条';
     });
+}
+
+function loadDepartments() {
+    return requestJson('/api/departments').then(function(result) {
+        departments = result && result.data ? result.data : [];
+        renderDepartmentOptions();
+    });
+}
+
+function loadTitles() {
+    return requestJson('/api/doctor-titles').then(function(result) {
+        titles = result && result.data ? result.data : [];
+        renderTitleOptions();
+    });
+}
+
+function renderDepartmentOptions(selectedValue) {
+    var select = document.getElementById('formDepartmentId');
+    var options = '<option value="">请选择科室</option>';
+    for (var i = 0; i < departments.length; i++) {
+        var department = departments[i];
+        var selected = String(selectedValue || '') === String(department.id) ? ' selected' : '';
+        options += '<option value="' + department.id + '"' + selected + '>' + esc(department.name) + '</option>';
+    }
+    select.innerHTML = options;
+}
+
+function renderTitleOptions(selectedValue) {
+    var select = document.getElementById('formTitleId');
+    var options = '<option value="">请选择职称</option>';
+    for (var i = 0; i < titles.length; i++) {
+        var title = titles[i];
+        var selected = String(selectedValue || '') === String(title.id) ? ' selected' : '';
+        options += '<option value="' + title.id + '"' + selected + '>' + esc(title.name) + '</option>';
+    }
+    select.innerHTML = options;
 }
 
 function esc(text) { var d = document.createElement('div'); d.textContent = text || ''; return d.innerHTML; }
 
 function openModal(title, data) {
+    clearPageMessage();
     document.getElementById('modalTitle').textContent = title;
     document.getElementById('editId').value = data ? data.id : '';
     document.getElementById('formEmployeeNo').value = data ? data.employeeNo : '';
     document.getElementById('formName').value = data ? data.name : '';
     document.getElementById('formGender').value = data ? data.gender : 'MALE';
-    document.getElementById('formDepartmentId').value = data ? data.departmentId : '';
-    document.getElementById('formTitleId').value = data ? data.titleId : '';
+    renderDepartmentOptions(data ? data.departmentId : '');
+    renderTitleOptions(data ? data.titleId : '');
     document.getElementById('formPhone').value = data ? data.phone || '' : '';
     document.getElementById('modal').classList.add('open');
 }
@@ -121,7 +160,10 @@ window.editDoctor = function(id) {
 window.delDoctor = function(id) {
     if (!confirm('确认删除该医生？')) return;
     requestJson(API + '/' + id, { method: 'DELETE' }).then(function(result) {
-        if (result) loadData();
+        if (result) {
+            setPageSuccess('医生删除成功。');
+            loadData();
+        }
     });
 };
 
@@ -144,8 +186,19 @@ document.getElementById('modalForm').addEventListener('submit', function(e) {
     var url = id ? API + '/' + id : API;
     var options = { method: id ? 'PUT' : 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) };
     requestJson(url, options).then(function(result) {
-        if (result) { document.getElementById('modal').classList.remove('open'); loadData(); }
+        if (result) {
+            document.getElementById('modal').classList.remove('open');
+            document.getElementById('modalForm').reset();
+            renderDepartmentOptions();
+            renderTitleOptions();
+            setPageSuccess(id ? '医生更新成功。' : '医生新增成功。');
+            loadData();
+        }
     });
+});
+
+Promise.all([loadDepartments(), loadTitles()]).then(function() {
+    loadData();
 });
 })();
 </script>

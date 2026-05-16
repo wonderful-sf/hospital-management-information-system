@@ -1,0 +1,170 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>排班管理 - 医院信息管理系统</title>
+    <link rel="stylesheet" href="/css/app.css">
+    <style>
+        .toolbar { display: flex; gap: 12px; margin-bottom: 18px; align-items: center; flex-wrap: wrap; }
+        .toolbar input, .toolbar select { padding: 10px 14px; border: 1px solid var(--color-border); border-radius: 12px; outline: none; }
+        .toolbar input:focus, .toolbar select:focus { border-color: var(--color-primary); }
+        .toolbar button { padding: 10px 20px; border: 0; border-radius: 12px; color: #fff; background: var(--color-primary); cursor: pointer; }
+        .toolbar button:hover { background: var(--color-primary-dark); }
+        table { width: 100%; border-collapse: collapse; background: var(--color-panel); border-radius: 14px; overflow: hidden; box-shadow: 0 8px 24px rgba(28,67,88,0.06); }
+        th, td { padding: 12px 16px; text-align: left; border-bottom: 1px solid var(--color-border); }
+        th { background: #f0f6fa; font-weight: 700; font-size: 13px; color: var(--color-muted); }
+        td button { padding: 6px 12px; margin-right: 6px; border: 1px solid var(--color-border); border-radius: 8px; background: #fff; cursor: pointer; }
+        td button:hover { background: #f0f6fa; }
+        td button.danger { color: #b42318; border-color: #fecaca; }
+        td button.danger:hover { background: #fef2f2; }
+        .modal-overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.35); place-items: center; z-index: 100; }
+        .modal-overlay.open { display: grid; }
+        .modal-card { width: min(520px, 92vw); padding: 28px; border-radius: 20px; background: #fff; box-shadow: var(--shadow-card); }
+        .modal-card h2 { margin: 0 0 20px; }
+        .modal-card label { display: grid; gap: 6px; margin-bottom: 14px; font-weight: 700; }
+        .modal-card input, .modal-card select { padding: 10px 12px; border: 1px solid var(--color-border); border-radius: 10px; outline: none; }
+        .modal-card input:focus, .modal-card select:focus { border-color: var(--color-primary); }
+        .modal-actions { display: flex; gap: 10px; justify-content: flex-end; margin-top: 8px; }
+        .modal-actions button { padding: 10px 20px; border: 0; border-radius: 12px; cursor: pointer; }
+        .modal-actions .btn-save { color: #fff; background: var(--color-primary); }
+        .modal-actions .btn-save:hover { background: var(--color-primary-dark); }
+        .modal-actions .btn-cancel { background: #f0f0f0; }
+        .pagination { margin-top: 14px; color: var(--color-muted); font-size: 13px; }
+    </style>
+</head>
+<body class="admin-page">
+<div class="admin-shell">
+    <header class="topbar">
+        <div><strong>医院信息管理系统</strong><span>Hospital Management Information System</span></div>
+        <div class="user-area"><span id="currentUser">未登录</span><button id="logoutButton" type="button">退出</button></div>
+    </header>
+    <aside class="sidebar">
+        <div class="sidebar-title">功能菜单</div>
+        <nav id="menuList" class="menu-list"></nav>
+    </aside>
+    <main class="content-panel">
+        <div class="page-heading"><p>Outpatient</p><h1>排班管理</h1><span>管理医生排班</span></div>
+        <div class="toolbar" style="margin-top:24px">
+            <input id="filterDoctorId" placeholder="医生ID..." style="width:120px" />
+            <input id="filterDepartmentId" placeholder="科室ID..." style="width:120px" />
+            <button id="searchBtn">筛选</button>
+            <button id="addBtn">新增排班</button>
+        </div>
+        <table><thead><tr><th>ID</th><th>医生ID</th><th>科室ID</th><th>类型</th><th>开始时间</th><th>结束时间</th><th>房间</th><th>操作</th></tr></thead><tbody id="tableBody"></tbody></table>
+        <div class="pagination" id="pagination"></div>
+    </main>
+    <footer class="footer">医院信息管理系统 &copy; 2026</footer>
+</div>
+<div class="modal-overlay" id="modal">
+    <div class="modal-card">
+        <h2 id="modalTitle">新增排班</h2>
+        <form id="modalForm">
+            <input type="hidden" id="editId" />
+            <label>医生ID<input id="formDoctorId" type="number" required /></label>
+            <label>科室ID<input id="formDepartmentId" type="number" required /></label>
+            <label>类型<select id="formScheduleType"><option value="OUTPATIENT">门诊</option><option value="INPATIENT_ROUND">住院查房</option></select></label>
+            <label>开始时间<input id="formStartTime" type="datetime-local" required /></label>
+            <label>结束时间<input id="formEndTime" type="datetime-local" required /></label>
+            <label>房间<input id="formRoom" /></label>
+            <div class="modal-actions">
+                <button type="button" class="btn-cancel" id="cancelBtn">取消</button>
+                <button type="submit" class="btn-save">保存</button>
+            </div>
+        </form>
+    </div>
+</div>
+<script src="/js/app.js"></script>
+<script>
+(function() {
+var API = '/api/schedules';
+
+function loadData() {
+    var doctorId = document.getElementById('filterDoctorId').value.trim();
+    var departmentId = document.getElementById('filterDepartmentId').value.trim();
+    var params = [];
+    if (doctorId) params.push('doctorId=' + encodeURIComponent(doctorId));
+    if (departmentId) params.push('departmentId=' + encodeURIComponent(departmentId));
+    var url = API + (params.length ? '?' + params.join('&') : '');
+    requestJson(url).then(function(result) {
+        if (!result) return;
+        var data = result.data || [];
+        var rows = '';
+        for (var i = 0; i < data.length; i++) {
+            var d = data[i];
+            var typeText = d.scheduleType === 'OUTPATIENT' ? '门诊' : '住院查房';
+            rows += '<tr><td>' + d.id + '</td><td>' + d.doctorId + '</td><td>' + d.departmentId + '</td><td>' + typeText + '</td><td>' + (d.startTime||'') + '</td><td>' + (d.endTime||'') + '</td><td>' + esc(d.room||'') + '</td><td><button onclick="editSchedule(' + d.id + ')">编辑</button><button class="danger" onclick="delSchedule(' + d.id + ')">删除</button></td></tr>';
+        }
+        document.getElementById('tableBody').innerHTML = rows || '<tr><td colspan="8">暂无数据</td></tr>';
+        document.getElementById('pagination').textContent = '共 ' + data.length + ' 条';
+    });
+}
+
+function esc(text) { var d = document.createElement('div'); d.textContent = text || ''; return d.innerHTML; }
+
+function formatLocalDateTime(dt) { if (!dt) return ''; return dt.substring(0, 16); }
+
+function openModal(title, data) {
+    clearPageMessage();
+    document.getElementById('modalTitle').textContent = title;
+    document.getElementById('editId').value = data ? data.id : '';
+    document.getElementById('formDoctorId').value = data ? data.doctorId : '';
+    document.getElementById('formDepartmentId').value = data ? data.departmentId : '';
+    document.getElementById('formScheduleType').value = data ? data.scheduleType : 'OUTPATIENT';
+    document.getElementById('formStartTime').value = data ? formatLocalDateTime(data.startTime) : '';
+    document.getElementById('formEndTime').value = data ? formatLocalDateTime(data.endTime) : '';
+    document.getElementById('formRoom').value = data ? data.room || '' : '';
+    document.getElementById('modal').classList.add('open');
+}
+
+window.editSchedule = function(id) {
+    requestJson(API).then(function(result) {
+        if (!result) return;
+        var data = result.data || [];
+        for (var i = 0; i < data.length; i++) {
+            if (data[i].id === id) { openModal('编辑排班', data[i]); return; }
+        }
+    });
+};
+
+window.delSchedule = function(id) {
+    if (!confirm('确认删除该排班？')) return;
+    requestJson(API + '/' + id, { method: 'DELETE' }).then(function(result) {
+        if (result) {
+            setPageSuccess('排班删除成功。');
+            loadData();
+        }
+    });
+};
+
+document.getElementById('searchBtn').addEventListener('click', loadData);
+document.getElementById('addBtn').addEventListener('click', function() { openModal('新增排班'); });
+document.getElementById('cancelBtn').addEventListener('click', function() { document.getElementById('modal').classList.remove('open'); });
+
+document.getElementById('modalForm').addEventListener('submit', function(e) {
+    e.preventDefault();
+    var id = document.getElementById('editId').value;
+    var payload = {
+        doctorId: parseInt(document.getElementById('formDoctorId').value),
+        departmentId: parseInt(document.getElementById('formDepartmentId').value),
+        scheduleType: document.getElementById('formScheduleType').value,
+        startTime: document.getElementById('formStartTime').value + ':00',
+        endTime: document.getElementById('formEndTime').value + ':00',
+        room: document.getElementById('formRoom').value
+    };
+    var url = id ? API + '/' + id : API;
+    var options = { method: id ? 'PUT' : 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) };
+    requestJson(url, options).then(function(result) {
+        if (result) {
+            document.getElementById('modal').classList.remove('open');
+            document.getElementById('modalForm').reset();
+            setPageSuccess(id ? '排班更新成功。' : '排班新增成功。');
+            loadData();
+        }
+    });
+});
+loadData();
+})();
+</script>
+</body>
+</html>
